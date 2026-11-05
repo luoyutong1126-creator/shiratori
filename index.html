@@ -1,0 +1,1934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>SHIRATORI · 接单</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ==================== 初始白底加载界面（6个由盈到缺克莱因蓝月相 -> welcome） ==================== -->
+  <div class="loader-screen" id="loaderScreen">
+    <div class="loader-stage">
+      <div class="loader-moons" id="loaderMoons">
+        <svg class="loader-moon" viewBox="0 0 36 36" aria-hidden="true">
+          <circle cx="18" cy="18" r="13" fill="#002FA7"/>
+        </svg>
+        <svg class="loader-moon" viewBox="0 0 36 36" aria-hidden="true">
+          <circle cx="18" cy="18" r="13" fill="rgba(0,47,167,0.10)"/>
+          <path d="M18 5 A13 13 0 0 0 18 31 A8.5 13 0 0 0 18 5 Z" fill="#002FA7"/>
+        </svg>
+        <svg class="loader-moon" viewBox="0 0 36 36" aria-hidden="true">
+          <circle cx="18" cy="18" r="13" fill="rgba(0,47,167,0.10)"/>
+          <path d="M18 5 A13 13 0 0 0 18 31 Z" fill="#002FA7"/>
+        </svg>
+        <svg class="loader-moon" viewBox="0 0 36 36" aria-hidden="true">
+          <circle cx="18" cy="18" r="13" fill="rgba(0,47,167,0.10)"/>
+          <path d="M18 5 A13 13 0 0 0 18 31 A6.5 13 0 0 1 18 5 Z" fill="#002FA7"/>
+        </svg>
+        <svg class="loader-moon" viewBox="0 0 36 36" aria-hidden="true">
+          <circle cx="18" cy="18" r="13" fill="rgba(0,47,167,0.10)"/>
+          <path d="M18 5 A13 13 0 0 0 18 31 A10.6 13 0 0 1 18 5 Z" fill="#002FA7"/>
+        </svg>
+        <svg class="loader-moon" viewBox="0 0 36 36" aria-hidden="true">
+          <circle cx="18" cy="18" r="12.2" fill="none" stroke="#002FA7" stroke-width="1.4" stroke-dasharray="3 2.2"/>
+        </svg>
+      </div>
+
+      <div class="loader-welcome" id="loaderWelcome" aria-label="welcome">
+        <span>w</span><span>e</span><span>l</span><span>c</span><span>o</span><span>m</span><span>e</span>
+      </div>
+    </div>
+
+    <button class="loader-skip" id="loaderSkip" type="button">SKIP</button>
+  </div>
+
+  <!-- ==================== 联系方式弹窗（底图：https://pic1.imgdb.cn/i/034sMS7Hkhy7Dxhd1ig1c6.jpg，点击复制 ID） ==================== -->
+  <div class="modal-overlay" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle">
+    <div class="modal-dialog contact-dialog">
+      <div>
+        <div class="modal-star">✦</div>
+        <div class="modal-title" id="contactModalTitle">联系方式</div>
+        <div class="modal-sub">CONTACT INFORMATION</div>
+      </div>
+
+      <div>
+        <div class="contact-list">
+          <div class="contact-row" data-copy="shirotori1126" title="点击复制微信号">
+            <span class="contact-platform">微信</span>
+            <div class="contact-right">
+              <span class="contact-id">shirotori1126</span>
+              <span class="contact-copy-tag">复制</span>
+            </div>
+          </div>
+
+          <div class="contact-row" data-copy="4291061676" title="点击复制小红书号">
+            <span class="contact-platform">小红书</span>
+            <div class="contact-right">
+              <span class="contact-id">4291061676</span>
+              <span class="contact-copy-tag">复制</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-hint" id="contactCopyHint">点击上方任意一行即可一键复制对应 ID</div>
+
+        <div class="modal-actions">
+          <button type="button" class="modal-btn modal-btn-yes" id="contactModalClose">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 点击下载图片时的确认弹窗：“是否已经阅读完毕注意事项？” ==================== -->
+  <div class="modal-overlay" id="notesConfirmModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-dialog">
+      <div class="modal-star">✦</div>
+      <div class="modal-title" id="modalTitle">是否已经阅读完毕注意事项？</div>
+      <div class="modal-tip" id="modalTip"></div>
+      <div class="modal-actions">
+        <a class="modal-btn modal-btn-yes" id="modalBtnYes" href="javascript:void(0)">是</a>
+        <button type="button" class="modal-btn modal-btn-no" id="modalBtnNo">否</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 4. 自适应高度的多视图舞台 ==================== -->
+  <div class="views-stage" id="viewsStage">
+
+    <!-- ==================== 视图 A：主界面（首页） ==================== -->
+    <section class="view view-home home is-active" id="view-home">
+      <header class="home-header">
+        <div><span class="dot"></span>SHIRATORI STUDIO</div>
+        <!-- 5. 首页最上方右侧改为“联系方式 CONTACT”，点击弹出联系方式窗口 -->
+        <button type="button" class="contact-trigger" id="openContactBtn">
+          <span>联系方式</span>
+          <span class="sep">·</span>
+          <span>CONTACT</span>
+        </button>
+      </header>
+
+      <!-- 正无穷行星带画布：纯粒子星尘自然过渡，在月亮图层之下 -->
+      <canvas class="mobius-canvas" id="mobiusCanvas"></canvas>
+
+      <!-- 核心视觉：月亮 (z-index: 2) + 景深 SHIRATORI 与单行灰色小字 (z-index: 3) -->
+      <main class="hero-stage" id="heroStage">
+        <div class="moon-stage" id="moonStage" title="点击月亮激起星环涟漪">
+          <img src="assets/moon.png" alt="moon" draggable="false" />
+        </div>
+
+        <div class="brand-wrap" id="brandWrap">
+          <div class="brand" aria-label="SHIRATORI">
+            <span>S</span><span>H</span><span>I</span><span>R</span><span>A</span><span>T</span><span>O</span><span>R</span><span>I</span>
+          </div>
+          <div class="brand-sub">FOR AESTHETIC COMMISSIONS</div>
+        </div>
+      </main>
+
+      <!-- 底部区域：无底色无边框音乐播放器（十字星芒） + 三个选项 + 水印 -->
+      <footer class="home-footer">
+        <div class="ins-player" id="insPlayer" aria-label="音乐播放器">
+          <audio id="bgmAudio" preload="metadata"></audio>
+          <div class="ins-player-top">
+            <div class="ins-song-info">
+              <!-- 1. 歌曲名前改为十字星芒（Four-Point Cross Starburst），保持上下浮动发光动态效果不变 -->
+              <svg class="ins-pentagram" viewBox="0 0 24 24" aria-hidden="true">
+                <!-- 斜向纤细星芒辅光 -->
+                <path
+                  d="M5.2 5.2 L10.7 10.7 L12 9.8 L13.3 10.7 L18.8 5.2 L13.3 12 L18.8 18.8 L12 13.3 L5.2 18.8 L10.7 12 Z"
+                  fill="rgba(255,255,255,0.42)"
+                />
+                <!-- 主十字修长星芒 -->
+                <path
+                  d="M12 0.8 C12.5 8.1 15.9 11.5 23.2 12 C15.9 12.5 12.5 15.9 12 23.2 C11.5 15.9 8.1 12.5 0.8 12 C8.1 11.5 11.5 8.1 12 0.8 Z"
+                  fill="#ffffff"
+                />
+                <circle cx="12" cy="12" r="1.6" fill="#ffffff" />
+              </svg>
+              <span class="ins-title" id="playerTitle">梦到内河</span>
+            </div>
+
+            <div class="ins-meta-right">
+              <div class="ins-controls">
+                <button class="ins-btn" id="btnMode" type="button" title="切换播放模式">
+                  <svg id="modeIcon" viewBox="0 0 24 24">
+                    <polyline points="17 1 21 5 17 9"></polyline>
+                    <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                    <polyline points="7 23 3 19 7 15"></polyline>
+                    <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                  </svg>
+                </button>
+
+                <button class="ins-btn" id="btnPrev" type="button" title="上一首">
+                  <svg viewBox="0 0 24 24">
+                    <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                    <line x1="5" y1="19" x2="5" y2="5"></line>
+                  </svg>
+                </button>
+
+                <button class="ins-btn ins-btn-play" id="btnPlay" type="button" title="播放 / 暂停">
+                  <svg id="playIcon" viewBox="0 0 24 24">
+                    <polygon points="7 4 20 12 7 20 7 4"></polygon>
+                  </svg>
+                </button>
+
+                <button class="ins-btn" id="btnNext" type="button" title="下一首">
+                  <svg viewBox="0 0 24 24">
+                    <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                    <line x1="19" y1="5" x2="19" y2="19"></line>
+                  </svg>
+                </button>
+              </div>
+              <span class="ins-mode-label" id="modeLabel">顺序循环</span>
+              <span class="ins-time" id="playerTime">0:00 / 0:00</span>
+            </div>
+          </div>
+
+          <div class="ins-progress-wrap" id="progressWrap" title="点击跳转进度">
+            <div class="ins-progress-bar">
+              <div class="ins-progress-fill" id="progressFill"></div>
+              <div class="ins-progress-dot" id="progressDot"></div>
+            </div>
+          </div>
+        </div>
+
+        <nav class="options">
+          <a class="option" href="#order" data-target="order" data-speed="2.2">
+            <svg class="phase" viewBox="0 0 32 32" aria-hidden="true">
+              <circle cx="16" cy="16" r="10.5" fill="rgba(255,255,255,0.06)"/>
+              <path d="M16 5.5 A10.5 10.5 0 0 1 16 26.5 A7.2 10.5 0 0 0 16 5.5 Z" fill="#f2f5ff"/>
+            </svg>
+            <span class="zh">需求填写</span>
+            <span class="en">ORDER</span>
+            <span class="dot-indicator"></span>
+          </a>
+
+          <a class="option" href="#notes" data-target="notes" data-speed="2.2">
+            <svg class="phase" viewBox="0 0 32 32" aria-hidden="true">
+              <circle cx="16" cy="16" r="10.5" fill="rgba(255,255,255,0.06)"/>
+              <path d="M16 5.5 A10.5 10.5 0 0 1 16 26.5 Z" fill="#f2f5ff"/>
+            </svg>
+            <span class="zh">注意事项</span>
+            <span class="en">NOTES</span>
+            <span class="dot-indicator"></span>
+          </a>
+
+          <a class="option" href="#share" data-target="share" data-speed="2.2">
+            <svg class="phase" viewBox="0 0 32 32" aria-hidden="true">
+              <circle cx="16" cy="16" r="10.5" fill="#f2f5ff"/>
+            </svg>
+            <span class="zh">免费美化分享</span>
+            <span class="en">SHARE</span>
+            <span class="dot-indicator"></span>
+          </a>
+        </nav>
+
+        <div class="watermark">@shiratori</div>
+      </footer>
+    </section>
+
+    <!-- ==================== 视图 B：需求填写 ==================== -->
+    <section class="view page" id="view-order">
+      <header class="topbar">
+        <div class="brand-sm" data-target="home">SHIRATORI</div>
+        <div class="sub-nav">
+          <button class="sub-nav-link active" data-target="order" type="button">需求填写</button>
+          <button class="sub-nav-link" data-target="notes" type="button">注意事项</button>
+          <button class="sub-nav-link" data-target="share" type="button">免费美化分享</button>
+          <button class="back" data-target="home" type="button">← 返回首页</button>
+        </div>
+      </header>
+
+      <main class="page-inner">
+        <form id="orderForm">
+          <!-- 右上角必填项「填表人」（克莱因蓝字体，明显展示） -->
+          <div class="order-head-row">
+            <div class="order-head-left">
+              <h1>需求填写</h1>
+              <p class="sub">请勾选您需要的美化项目并填写具体要求，底部将实时计算总金额，提交后可生成小票样式需求单图片。</p>
+            </div>
+            <div class="filler-box">
+              <label class="filler-label" for="fillerNameInput">填表人<span class="req">*</span></label>
+              <input
+                type="text"
+                name="filler_name"
+                id="fillerNameInput"
+                class="filler-input"
+                placeholder="请填写您的称呼 / ID"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- 01 您需要？ -->
+          <div class="form-section">
+            <div class="section-title">
+              <span class="num">01</span>您需要？
+              <span class="hint">可多选，勾选后均可展开选填备注栏</span>
+            </div>
+
+            <div class="choice-list" id="serviceList">
+              <!-- 全局美化 -->
+              <div class="choice-item" data-item="global">
+                <div class="choice-head">
+                  <label class="choice-label">
+                    <input type="checkbox" name="svc_global" value="1" />
+                    <span>全局美化</span>
+                  </label>
+                  <span class="catalog-dots"></span>
+                  <span class="catalog-price">30￥</span>
+                </div>
+                <div class="choice-note">
+                  <input type="text" name="note_global" placeholder="备注（选填）：对全局美化的补充说明……" />
+                </div>
+              </div>
+
+              <!-- 正文前状态栏 -->
+              <div class="choice-item" data-item="pre_status">
+                <div class="choice-head">
+                  <label class="choice-label">
+                    <input type="checkbox" name="svc_pre_status" value="1" />
+                    <span>正文前状态栏</span>
+                  </label>
+                  <span class="catalog-dots"></span>
+                  <span class="catalog-price">3￥</span>
+                </div>
+                <div class="choice-note">
+                  <input type="text" name="note_pre_status" placeholder="备注（选填）：需要展示的字段或样式说明……" />
+                </div>
+              </div>
+
+              <!-- 正文后状态栏 -->
+              <div class="choice-item" data-item="post_status">
+                <div class="choice-head">
+                  <label class="choice-label">
+                    <input type="checkbox" name="svc_post_status" value="1" />
+                    <span>正文后状态栏<span class="choice-subdesc">默认三个，多一个加3￥</span></span>
+                  </label>
+                  <div class="qty-stepper">
+                    <span>数量</span>
+                    <button type="button" class="qty-btn" data-step="-1" data-for="post_qty">−</button>
+                    <span class="qty-val" id="post_qty_val">3</span>
+                    <button type="button" class="qty-btn" data-step="1" data-for="post_qty">+</button>
+                    <span>个</span>
+                    <input type="hidden" name="post_qty" id="post_qty" value="3" data-min="3" />
+                  </div>
+                  <span class="catalog-dots"></span>
+                  <span class="catalog-price">5￥</span>
+                </div>
+                <div class="choice-note">
+                  <input type="text" name="note_post_status" placeholder="备注（选填）：各状态栏具体内容或顺序……" />
+                </div>
+              </div>
+
+              <!-- 侧边栏 -->
+              <div class="choice-item" data-item="sidebar">
+                <div class="choice-head">
+                  <label class="choice-label">
+                    <input type="checkbox" name="svc_sidebar" value="1" />
+                    <span>侧边栏</span>
+                  </label>
+                  <div class="qty-stepper">
+                    <span>数量</span>
+                    <button type="button" class="qty-btn" data-step="-1" data-for="sidebar_qty">−</button>
+                    <span class="qty-val" id="sidebar_qty_val">1</span>
+                    <button type="button" class="qty-btn" data-step="1" data-for="sidebar_qty">+</button>
+                    <span>个</span>
+                    <input type="hidden" name="sidebar_qty" id="sidebar_qty" value="1" data-min="1" />
+                  </div>
+                  <span class="catalog-dots"></span>
+                  <span class="catalog-price">5￥</span>
+                </div>
+                <div class="choice-note">
+                  <input type="text" name="note_sidebar" placeholder="备注（选填）：侧边栏栏目/功能说明……" />
+                </div>
+              </div>
+
+              <!-- 开屏动画 -->
+              <div class="choice-item" data-item="splash">
+                <div class="choice-head">
+                  <label class="choice-label">
+                    <input type="checkbox" name="svc_splash" value="1" />
+                    <span>开屏动画</span>
+                  </label>
+                  <span class="catalog-dots"></span>
+                  <span class="catalog-price">5￥</span>
+                </div>
+                <div class="choice-note">
+                  <input type="text" name="note_splash" placeholder="备注（选填）：想要的开屏文案或动效感觉……" />
+                </div>
+              </div>
+
+              <!-- 角色介绍组件 -->
+              <div class="choice-item" data-item="char_card">
+                <div class="choice-head">
+                  <label class="choice-label">
+                    <input type="checkbox" name="svc_char_card" value="1" />
+                    <span>角色介绍组件</span>
+                  </label>
+                  <span class="catalog-dots"></span>
+                  <span class="catalog-price">5￥</span>
+                </div>
+                <div class="choice-note">
+                  <input type="text" name="note_char_card" placeholder="备注（选填）：角色名、人设信息或版式偏好……" />
+                </div>
+              </div>
+
+              <!-- npc介绍组件 -->
+              <div class="choice-item" data-item="npc_card">
+                <div class="choice-head">
+                  <label class="choice-label">
+                    <input type="checkbox" name="svc_npc_card" value="1" />
+                    <span>npc介绍组件</span>
+                  </label>
+                  <span class="catalog-dots"></span>
+                  <span class="catalog-price">5￥</span>
+                </div>
+                <div class="choice-note">
+                  <input type="text" name="note_npc_card" placeholder="备注（选填）：NPC数量、信息字段或样式……" />
+                </div>
+              </div>
+
+              <!-- 桌宠 -->
+              <div class="choice-item" data-item="pet">
+                <div class="choice-head">
+                  <label class="choice-label">
+                    <input type="checkbox" name="svc_pet" value="1" />
+                    <span>桌宠<span class="choice-subdesc">需自带q版图</span></span>
+                  </label>
+                  <span class="catalog-dots"></span>
+                  <span class="catalog-price">15￥</span>
+                </div>
+                <div class="choice-note">
+                  <input type="text" name="note_pet" placeholder="备注（选填）：桌宠互动动作或位置说明……" />
+                </div>
+              </div>
+
+              <!-- 其余小组件 -->
+              <div class="choice-item" data-item="other_widget">
+                <div class="choice-head">
+                  <label class="choice-label">
+                    <input type="checkbox" name="svc_other_widget" value="1" />
+                    <span>其余小组件<span class="choice-subdesc">视复杂程度不等</span></span>
+                  </label>
+                  <span class="catalog-dots"></span>
+                  <span class="catalog-price">5￥起步</span>
+                </div>
+                <div class="choice-note">
+                  <input type="text" name="note_other_widget" placeholder="备注（选填）：请描述想要的小组件效果……" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 02 是否需要加急？ -->
+          <div class="form-section">
+            <div class="section-title">
+              <span class="num">02</span>是否需要加急？
+            </div>
+            <div class="radio-catalog">
+              <div class="choice-head">
+                <label class="choice-label">
+                  <input type="radio" name="urgent" value="yes" />
+                  <span>需要</span>
+                </label>
+                <span class="catalog-dots"></span>
+                <span class="catalog-price">金额x2</span>
+              </div>
+              <div class="choice-head">
+                <label class="choice-label">
+                  <input type="radio" name="urgent" value="no" checked />
+                  <span>不需要</span>
+                </label>
+                <span class="catalog-dots"></span>
+                <span class="catalog-price">常规排期</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 03 聊天背景图是否指定char图？ -->
+          <div class="form-section">
+            <div class="section-title">
+              <span class="num">03</span>聊天背景图是否指定char图？
+            </div>
+            <div class="radio-catalog">
+              <div class="choice-head">
+                <label class="choice-label">
+                  <input type="radio" name="bg_char" value="指定 · 您自行提供" required />
+                  <span>指定</span>
+                </label>
+                <span class="catalog-dots"></span>
+                <span class="catalog-price" style="color:#666;font-weight:400;">您自行提供</span>
+              </div>
+              <div class="choice-head">
+                <label class="choice-label">
+                  <input type="radio" name="bg_char" value="不指定 · 默认我自由发挥" checked />
+                  <span>不指定</span>
+                </label>
+                <span class="catalog-dots"></span>
+                <span class="catalog-price" style="color:#666;font-weight:400;">默认我自由发挥</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 04 具体要求 -->
+          <div class="form-section">
+            <div class="section-title">
+              <span class="num">04</span>具体要求
+              <span class="hint">以下均为必填</span>
+            </div>
+
+            <div class="field">
+              <label>整体风格？ <span class="req">*</span></label>
+              <input type="text" name="req_style" placeholder="例如：简约、清新、文艺、复古画报、新中式……" required />
+            </div>
+
+            <div class="field">
+              <label>色系？ <span class="req">*</span></label>
+              <input type="text" name="req_color" placeholder="例如：黑白+克莱因蓝、灰粉、冷银白、奶白浅灰……" required />
+            </div>
+
+            <div class="field">
+              <label>元素？ <span class="req">*</span></label>
+              <input type="text" name="req_element" placeholder="例如：月相、星轨、白鸟、玫瑰、胶片、书页……" required />
+            </div>
+          </div>
+
+          <!-- 05 有无其余特殊要求？ -->
+          <div class="form-section">
+            <div class="section-title">
+              <span class="num">05</span>有无其余特殊要求？
+            </div>
+            <div class="radio-row">
+              <label class="choice-label">
+                <input type="radio" name="has_special" value="no" checked />
+                <span>无</span>
+              </label>
+              <label class="choice-label">
+                <input type="radio" name="has_special" value="yes" />
+                <span>有<span class="choice-subdesc">勾选展开必填备注栏</span></span>
+              </label>
+            </div>
+            <div class="field" id="specialNoteWrap" style="display:none;margin-top:16px;">
+              <label>特殊要求备注 <span class="req">*</span></label>
+              <input type="text" name="special_note" id="specialNoteInput" placeholder="请详细填写您的特殊要求……" />
+            </div>
+          </div>
+
+          <!-- 底部实时总金额显示 -->
+          <div class="total-bar">
+            <div class="total-left">
+              <span class="total-label">当前预估总金额</span>
+              <span class="total-breakdown" id="totalBreakdown">暂未勾选项目</span>
+            </div>
+            <div class="total-amount" id="totalAmount">0￥</div>
+          </div>
+
+          <button class="btn-submit" type="submit">生成小票样式需求单</button>
+          <p class="form-note">提交后将在下方生成包含您 ID 及专属配色备注的「SHIRATORI 客单小票」，可一键下载保存。</p>
+        </form>
+
+        <div class="export-area" id="exportArea">
+          <h3 style="font-size:17px;font-weight:400;letter-spacing:.12em;margin-bottom:18px;">需求单小票预览</h3>
+          <div class="receipt-preview-wrap">
+            <canvas id="exportCanvas"></canvas>
+            <img id="exportPreviewImg" class="receipt-preview-img" alt="SHIRATORI 需求单小票" />
+          </div>
+          <button type="button" id="downloadBtn" class="btn-submit">下载小票图片</button>
+          <p class="download-status-tip" id="downloadStatusTip"></p>
+          <p class="form-note" style="margin-top:8px;">点击按钮即可下载保存；也可直接在上方小票图片上「右键 → 图片另存为 / 长按保存」。</p>
+        </div>
+      </main>
+
+      <div class="page-watermark">@shiratori</div>
+    </section>
+
+    <!-- ==================== 视图 C：注意事项 ==================== -->
+    <section class="view page" id="view-notes">
+      <header class="topbar">
+        <div class="brand-sm" data-target="home">SHIRATORI</div>
+        <div class="sub-nav">
+          <button class="sub-nav-link" data-target="order" type="button">需求填写</button>
+          <button class="sub-nav-link active" data-target="notes" type="button">注意事项</button>
+          <button class="sub-nav-link" data-target="share" type="button">免费美化分享</button>
+          <button class="back" data-target="home" type="button">← 返回首页</button>
+        </div>
+      </header>
+
+      <main class="page-inner">
+        <h1>注意事项</h1>
+        <p class="sub">约单前请仔细阅读以下说明，确认合适后再进行委托。</p>
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>关于美化</h3>
+          <ul>
+            <li>使用可商用小助手和自己的小助手制作，需标注商用小助手会和您说明</li>
+            <li>请在确认能接受我风格的前提下进行约单</li>
+            <li>更擅长简约、清新、文艺的风格，最不擅长赛博朋克和极繁主义</li>
+          </ul>
+        </div>
+
+        <div class="block">
+          <h3>关于修改</h3>
+          <ul>
+            <li>不接受任何形式的多人审稿，请见谅</li>
+            <li>不接受无法在24h以内回复消息，出现这样的情况会主动提出终止合作，请见谅</li>
+            <li>全局美化修改不超过10处，组件修改次数不超过5次，请尽量一次性说完所有要求，在我向您确认修改完成后，不再接受“还是之前的更好”或者重新对这部分提出修改要求</li>
+          </ul>
+        </div>
+
+        <div class="block">
+          <h3>关于流程</h3>
+          <ul>
+            <li>我的习惯是先做全局美化，再做状态栏、侧边栏，最后做其他组件，如果需要我先做什么可以提前说明</li>
+            <li>效果会以预览图和视频的形式发送给您，如果想在卡内预览，我会给您发送链接</li>
+          </ul>
+        </div>
+
+        <div class="block">
+          <h3>其他</h3>
+          <ul>
+            <li>合作过程中有任何不满意或者其他原因可随时提出终止合作，我会按照已经制作的状况收取费用，或者不收取任何费用，我也不会发送作品并会将回收再使用</li>
+          </ul>
+        </div>
+
+        <p class="thanks-closing">以上，感谢各位单主的信任，我会努力做出让您满意的美化❤</p>
+      </main>
+
+      <div class="page-watermark">@shiratori</div>
+    </section>
+
+    <!-- ==================== 视图 D：免费美化分享（白底） ==================== -->
+    <section class="view page" id="view-share">
+      <header class="topbar">
+        <div class="brand-sm" data-target="home">SHIRATORI</div>
+        <div class="sub-nav">
+          <button class="sub-nav-link" data-target="order" type="button">需求填写</button>
+          <button class="sub-nav-link" data-target="notes" type="button">注意事项</button>
+          <button class="sub-nav-link active" data-target="share" type="button">免费美化分享</button>
+          <button class="back" data-target="home" type="button">← 返回首页</button>
+        </div>
+      </header>
+
+      <main class="page-inner">
+        <h1>免费美化分享</h1>
+        <p class="sub">不定期分享可复用的排版模板、配色方案与小技巧，欢迎自取。</p>
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>克莱因蓝 + 宋体 极简版式</h3>
+          <p>以纯黑或纯白为底，主色锁定克莱因蓝 #002FA7，正文用宋体，标题控制字距，留白即克制。</p>
+        </div>
+
+        <div class="block">
+          <h3>月亮主视觉构图</h3>
+          <p>满月素材叠压修长白色主标题，视觉重心居中，底层配合 ∞ 行星微尘轨道营造空间纵深。</p>
+        </div>
+
+        <div class="block">
+          <h3>接单页结构建议</h3>
+          <ul>
+            <li>首页：品牌 + 主视觉 + 入口导航</li>
+            <li>需求页：目录式清单 + 一键导出小票需求单，降低沟通成本</li>
+            <li>说明页：把规则讲在前面，减少售后摩擦</li>
+          </ul>
+        </div>
+
+        <p class="form-note">更多美化素材持续更新中。</p>
+      </main>
+
+      <div class="page-watermark">@shiratori</div>
+    </section>
+
+  </div>
+
+  <script>
+  (function(){
+    /* ============================================================
+     * 1. 初始白底加载动画：6个克莱因蓝月相（由盈到缺）-> welcome -> 进入主界面
+     * ============================================================ */
+    const loaderScreen  = document.getElementById('loaderScreen');
+    const loaderMoons   = document.getElementById('loaderMoons');
+    const moonIcons     = loaderMoons.querySelectorAll('.loader-moon');
+    const loaderWelcome = document.getElementById('loaderWelcome');
+    const welcomeChars  = loaderWelcome.querySelectorAll('span');
+    const loaderSkip    = document.getElementById('loaderSkip');
+    let loaderFinished  = false;
+
+    function finishLoader(){
+      if(loaderFinished) return;
+      loaderFinished = true;
+      loaderScreen.classList.add('is-hidden');
+    }
+
+    loaderSkip.addEventListener('click', finishLoader);
+
+    const stepDelay = 280;
+    moonIcons.forEach(function(icon, idx){
+      setTimeout(function(){
+        if(loaderFinished) return;
+        icon.classList.add('active');
+      }, 220 + idx * stepDelay);
+    });
+
+    const allMoonsTime = 220 + moonIcons.length * stepDelay + 340;
+    setTimeout(function(){
+      if(loaderFinished) return;
+      loaderMoons.classList.add('fade-out');
+      setTimeout(function(){
+        if(loaderFinished) return;
+        loaderWelcome.classList.add('show');
+        welcomeChars.forEach(function(ch, i){
+          setTimeout(function(){
+            ch.classList.add('char-in');
+          }, i * 75);
+        });
+      }, 320);
+    }, allMoonsTime);
+
+    setTimeout(finishLoader, allMoonsTime + 1550);
+
+    /* ============================================================
+     * 4. 页面高度完全自适应 + 丝滑单页多视图切换
+     *    （非当前视图平时 display:none，切换瞬间旧视图设为 is-leaving 叠层淡出，结束后立即隐藏）
+     * ============================================================ */
+    const views = {
+      home:  document.getElementById('view-home'),
+      order: document.getElementById('view-order'),
+      notes: document.getElementById('view-notes'),
+      share: document.getElementById('view-share')
+    };
+
+    let currentView = 'home';
+    let hasVisitedNotes = false;
+    try {
+      if(sessionStorage.getItem('shiratori_visited_notes') === '1'){
+        hasVisitedNotes = true;
+      }
+    } catch(e){}
+
+    function markNotesVisited(){
+      hasVisitedNotes = true;
+      try { sessionStorage.setItem('shiratori_visited_notes', '1'); } catch(e){}
+      if(typeof syncModalYesLinkAttr === 'function'){
+        syncModalYesLinkAttr();
+      }
+    }
+
+    function switchView(name, pushHash){
+      const target = views[name] ? name : 'home';
+      if(target === 'notes'){
+        markNotesVisited();
+      }
+      if(target !== currentView){
+        const prevEl = views[currentView];
+        const nextEl = views[target];
+        if(prevEl){
+          prevEl.classList.remove('is-active');
+          prevEl.classList.add('is-leaving');
+          setTimeout(function(){
+            prevEl.classList.remove('is-leaving');
+          }, 640);
+        }
+        nextEl.classList.remove('is-leaving');
+        // 触发重排以让新进入的视图执行丝滑淡入过渡
+        void nextEl.offsetWidth;
+        nextEl.classList.add('is-active');
+        currentView = target;
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.body.classList.toggle('is-light-view', target !== 'home');
+      if(pushHash !== false){
+        if(target === 'home'){
+          history.replaceState(null, '', location.pathname + location.search);
+        } else {
+          history.replaceState(null, '', '#' + target);
+        }
+      }
+    }
+
+    document.querySelectorAll('[data-target]').forEach(function(el){
+      el.addEventListener('click', function(e){
+        e.preventDefault();
+        const t = el.getAttribute('data-target');
+        switchView(t, true);
+      });
+    });
+
+    window.addEventListener('hashchange', function(){
+      const h = (location.hash || '').replace('#', '');
+      switchView(h || 'home', false);
+    });
+
+    const initHash = (location.hash || '').replace('#', '');
+    if(initHash && views[initHash]){
+      switchView(initHash, false);
+    }
+
+    /* ============================================================
+     * 5. 首页右上角「联系方式 · CONTACT」弹窗 + 点击一键复制微信/小红书 ID
+     * ============================================================ */
+    const openContactBtn    = document.getElementById('openContactBtn');
+    const contactModal      = document.getElementById('contactModal');
+    const contactModalClose = document.getElementById('contactModalClose');
+    const contactCopyHint   = document.getElementById('contactCopyHint');
+
+    function copyTextToClipboard(text){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        return navigator.clipboard.writeText(text).catch(function(){
+          return fallbackCopyText(text);
+        });
+      }
+      return fallbackCopyText(text);
+    }
+
+    function fallbackCopyText(text){
+      return new Promise(function(resolve){
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try { document.execCommand('copy'); } catch(e){}
+        document.body.removeChild(ta);
+        resolve();
+      });
+    }
+
+    if(openContactBtn){
+      openContactBtn.addEventListener('click', function(){
+        contactCopyHint.textContent = '点击上方任意一行即可一键复制对应 ID';
+        contactModal.classList.add('is-open');
+      });
+    }
+
+    if(contactModalClose){
+      contactModalClose.addEventListener('click', function(){
+        contactModal.classList.remove('is-open');
+      });
+    }
+
+    contactModal.addEventListener('click', function(e){
+      if(e.target === contactModal){
+        contactModal.classList.remove('is-open');
+      }
+    });
+
+    document.querySelectorAll('.contact-row[data-copy]').forEach(function(row){
+      row.addEventListener('click', function(){
+        const idText = row.getAttribute('data-copy');
+        const tag = row.querySelector('.contact-copy-tag');
+        copyTextToClipboard(idText).then(function(){
+          row.classList.add('copied');
+          tag.textContent = '已复制';
+          contactCopyHint.textContent = '已成功复制：' + idText;
+          setTimeout(function(){
+            row.classList.remove('copied');
+            tag.textContent = '复制';
+          }, 1600);
+        });
+      });
+    });
+
+    /* ============================================================
+     * 6. 音乐播放器（共 12 首曲目：原 3 首 + 新增 9 首，全部已缓存本地并配远程回退）
+     * ============================================================ */
+    const playlist = [
+      {
+        title: '梦到内河',
+        src: 'assets/song1.mp3',
+        fallback: 'https://music.163.com/song/media/outer/url?id=29343388.mp3'
+      },
+      {
+        title: '今生今世',
+        src: 'assets/song2.mp3',
+        fallback: 'https://music.163.com/song/media/outer/url?id=186422.mp3'
+      },
+      {
+        title: '枕头',
+        src: 'assets/song3.mp3',
+        fallback: 'https://music.163.com/song/media/outer/url?id=187345.mp3'
+      },
+      {
+        title: '大热',
+        src: 'assets/song4.mp3',
+        fallback: 'https://videotourl.com/audio/1792913810520-6798ecbe-a893-4f95-b6ba-ce5ec2bf6624.mp3'
+      },
+      {
+        title: '挪亚方舟',
+        src: 'assets/song5.mp3',
+        fallback: 'https://music.163.com/song/media/outer/url?id=186496.mp3'
+      },
+      {
+        title: '十号风球',
+        src: 'assets/song6.mp3',
+        fallback: 'https://music.163.com/song/media/outer/url?id=186459.mp3'
+      },
+      {
+        title: '怪你过分美丽',
+        src: 'assets/song7.mp3',
+        fallback: 'https://music.163.com/song/media/outer/url?id=2163722623.mp3'
+      },
+      {
+        title: '共同渡过 Together Forever',
+        src: 'assets/song8.mp3',
+        fallback: 'https://music.163.com/song/media/outer/url?id=2032788748.mp3'
+      },
+      {
+        title: '当爱已成往事',
+        src: 'assets/song9.mp3',
+        fallback: 'https://videotourl.com/audio/1793888107583-9a39e701-1670-4e4a-9ed3-26eee324c69b.mp3'
+      },
+      {
+        title: '侯斯顿之恋',
+        src: 'assets/song10.mp3',
+        fallback: 'https://videotourl.com/audio/1793888133389-a31e8435-3381-467a-b3a4-9c318b043c55.mp3'
+      },
+      {
+        title: '我',
+        src: 'assets/song11.mp3',
+        fallback: 'https://videotourl.com/audio/1793888121881-f2a41a86-f968-43f3-ab07-c88d27689e06.mp3'
+      },
+      {
+        title: '午后红茶',
+        src: 'assets/song12.mp3',
+        fallback: 'https://music.163.com/song/media/outer/url?id=1911495017.mp3'
+      }
+    ];
+
+    const modes = [
+      {
+        key: 'loop',
+        label: '顺序循环',
+        svg: '<polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path>'
+      },
+      {
+        key: 'random',
+        label: '随机播放',
+        svg: '<polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line>'
+      },
+      {
+        key: 'single',
+        label: '单曲循环',
+        svg: '<polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path><line x1="12" y1="9" x2="12" y2="15"></line>'
+      }
+    ];
+
+    const insPlayer    = document.getElementById('insPlayer');
+    const audio        = document.getElementById('bgmAudio');
+    const playerTitle  = document.getElementById('playerTitle');
+    const playerTime   = document.getElementById('playerTime');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressFill = document.getElementById('progressFill');
+    const progressDot  = document.getElementById('progressDot');
+    const btnPlay      = document.getElementById('btnPlay');
+    const playIcon     = document.getElementById('playIcon');
+    const btnPrev      = document.getElementById('btnPrev');
+    const btnNext      = document.getElementById('btnNext');
+    const btnMode      = document.getElementById('btnMode');
+    const modeIcon     = document.getElementById('modeIcon');
+    const modeLabel    = document.getElementById('modeLabel');
+
+    let curIndex  = 0;
+    let modeIndex = 0;
+
+    function fmtTime(sec){
+      if(!isFinite(sec) || sec < 0) return '0:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return m + ':' + (s < 10 ? '0' + s : s);
+    }
+
+    function syncPlayUI(playing){
+      insPlayer.classList.toggle('is-playing', playing);
+      if(playing){
+        playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+      } else {
+        playIcon.innerHTML = '<polygon points="7 4 20 12 7 20 7 4"></polygon>';
+      }
+    }
+
+    function loadTrack(idx, autoPlay){
+      curIndex = (idx + playlist.length) % playlist.length;
+      const track = playlist[curIndex];
+      playerTitle.textContent = track.title;
+      audio.dataset.usedFallback = '0';
+      audio.src = track.src;
+      progressFill.style.width = '0%';
+      progressDot.style.left = '0%';
+      playerTime.textContent = '0:00 / 0:00';
+      if(autoPlay){
+        audio.play().then(function(){
+          syncPlayUI(true);
+        }).catch(function(){
+          syncPlayUI(false);
+        });
+      }
+    }
+
+    audio.addEventListener('error', function(){
+      const track = playlist[curIndex];
+      if(audio.dataset.usedFallback !== '1' && track && track.fallback){
+        audio.dataset.usedFallback = '1';
+        audio.src = track.fallback;
+      }
+    });
+
+    function nextTrack(fromEnded){
+      const curMode = modes[modeIndex].key;
+      if(fromEnded && curMode === 'single'){
+        audio.currentTime = 0;
+        audio.play();
+        return;
+      }
+      if(curMode === 'random'){
+        let next = Math.floor(Math.random() * playlist.length);
+        if(playlist.length > 1 && next === curIndex){
+          next = (curIndex + 1) % playlist.length;
+        }
+        loadTrack(next, true);
+      } else {
+        loadTrack(curIndex + 1, true);
+      }
+    }
+
+    function prevTrack(){
+      const curMode = modes[modeIndex].key;
+      if(curMode === 'random'){
+        let prev = Math.floor(Math.random() * playlist.length);
+        if(playlist.length > 1 && prev === curIndex){
+          prev = (curIndex - 1 + playlist.length) % playlist.length;
+        }
+        loadTrack(prev, true);
+      } else {
+        loadTrack(curIndex - 1, true);
+      }
+    }
+
+    btnPlay.addEventListener('click', function(){
+      if(audio.paused){
+        audio.play().then(function(){ syncPlayUI(true); }).catch(function(){});
+      } else {
+        audio.pause();
+        syncPlayUI(false);
+      }
+    });
+
+    btnNext.addEventListener('click', function(){ nextTrack(false); });
+    btnPrev.addEventListener('click', function(){ prevTrack(); });
+
+    btnMode.addEventListener('click', function(){
+      modeIndex = (modeIndex + 1) % modes.length;
+      modeIcon.innerHTML = modes[modeIndex].svg;
+      modeLabel.textContent = modes[modeIndex].label;
+    });
+
+    audio.addEventListener('timeupdate', function(){
+      const cur = audio.currentTime || 0;
+      const dur = audio.duration || 0;
+      const pct = dur > 0 ? Math.min(100, (cur / dur) * 100) : 0;
+      progressFill.style.width = pct.toFixed(2) + '%';
+      progressDot.style.left   = pct.toFixed(2) + '%';
+      playerTime.textContent   = fmtTime(cur) + ' / ' + fmtTime(dur);
+    });
+
+    audio.addEventListener('loadedmetadata', function(){
+      playerTime.textContent = fmtTime(audio.currentTime || 0) + ' / ' + fmtTime(audio.duration || 0);
+    });
+
+    audio.addEventListener('ended', function(){
+      nextTrack(true);
+    });
+
+    progressWrap.addEventListener('click', function(e){
+      const rect = progressWrap.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      if(audio.duration){
+        audio.currentTime = ratio * audio.duration;
+      }
+    });
+
+    loadTrack(0, false);
+    let autoPlayTried = false;
+    function tryStartAudioOnce(){
+      if(autoPlayTried) return;
+      autoPlayTried = true;
+      if(audio.paused){
+        audio.play().then(function(){ syncPlayUI(true); }).catch(function(){});
+      }
+    }
+    window.addEventListener('click', tryStartAudioOnce, { once: true });
+
+    /* ============================================================
+     * 主界面：正无穷（∞）行星尘埃带
+     * ============================================================ */
+    const canvas     = document.getElementById('mobiusCanvas');
+    const ctx        = canvas.getContext('2d');
+    const moonStage  = document.getElementById('moonStage');
+    const brandWrap  = document.getElementById('brandWrap');
+    const brandSpans = document.querySelectorAll('.brand span');
+    const DPR        = Math.min(window.devicePixelRatio || 1, 2);
+
+    let W = 0, H = 0, cx = 0, cy = 0, A = 0;
+
+    const pointer = {
+      x: 0, y: 0,
+      nx: 0, ny: 0,
+      tx: 0, ty: 0,
+      active: false,
+      speedBoost: 1,
+      targetBoost: 1,
+      pulse: 0
+    };
+
+    function syncCenter(){
+      if(moonStage && views.home.classList.contains('is-active')){
+        const r = moonStage.getBoundingClientRect();
+        cx = (r.left + r.width / 2) * DPR;
+        cy = (r.top  + r.height / 2) * DPR;
+      } else {
+        cx = W / 2;
+        cy = H * 0.45;
+      }
+      A = Math.min(W * 0.46, H * 0.56);
+    }
+
+    function resize(){
+      W = canvas.width  = Math.floor(innerWidth  * DPR);
+      H = canvas.height = Math.floor(innerHeight * DPR);
+      canvas.style.width  = innerWidth + 'px';
+      canvas.style.height = innerHeight + 'px';
+      syncCenter();
+    }
+    resize();
+    addEventListener('resize', resize);
+
+    const trail = [];
+    window.addEventListener('mousemove', function(e){
+      pointer.x = e.clientX * DPR;
+      pointer.y = e.clientY * DPR;
+      pointer.nx = (e.clientX / innerWidth  - 0.5) * 2;
+      pointer.ny = (e.clientY / innerHeight - 0.5) * 2;
+      pointer.active = true;
+
+      if(views.home.classList.contains('is-active') && brandSpans.length){
+        const focusIdx = (pointer.nx * 0.5 + 0.5) * (brandSpans.length - 1);
+        brandSpans.forEach(function(sp, idx){
+          const dist = Math.abs(idx - focusIdx);
+          const blur = Math.max(0, (dist - 1.2) * 0.42);
+          const z    = (18 - dist * 7).toFixed(1);
+          const op   = Math.max(0.74, 1 - dist * 0.045).toFixed(2);
+          sp.style.filter = 'blur(' + blur.toFixed(2) + 'px)';
+          sp.style.opacity = op;
+          sp.style.transform = 'translateZ(' + z + 'px)';
+        });
+      }
+
+      if(views.home.classList.contains('is-active') && Math.random() < 0.65){
+        trail.push({
+          x: pointer.x + (Math.random() - 0.5) * 8 * DPR,
+          y: pointer.y + (Math.random() - 0.5) * 8 * DPR,
+          vx: (Math.random() - 0.5) * 0.45 * DPR,
+          vy: (Math.random() - 0.5) * 0.45 * DPR - 0.25 * DPR,
+          r: (0.6 + Math.random() * 1.2) * DPR,
+          life: 1
+        });
+        if(trail.length > 42) trail.shift();
+      }
+    });
+
+    const ripples = [];
+    if(moonStage){
+      moonStage.addEventListener('click', function(){
+        pointer.pulse = 1;
+        ripples.push({ r: moonStage.offsetWidth * 0.42 * DPR, alpha: 0.55 });
+      });
+    }
+
+    document.querySelectorAll('.options .option').forEach(function(opt){
+      opt.addEventListener('mouseenter', function(){
+        pointer.targetBoost = 2.4;
+      });
+      opt.addEventListener('mouseleave', function(){
+        pointer.targetBoost = 1;
+        opt.style.transform = '';
+      });
+      opt.addEventListener('mousemove', function(e){
+        const r = opt.getBoundingClientRect();
+        const mx = (e.clientX - (r.left + r.width / 2)) * 0.18;
+        const my = (e.clientY - (r.top  + r.height / 2)) * 0.18;
+        opt.style.transform = 'translate(' + mx.toFixed(1) + 'px,' + (my - 3).toFixed(1) + 'px)';
+      });
+    });
+
+    function infinityPoint(t, radialOffset, normalOffset, zJitter, time){
+      const s = Math.sin(t);
+      const c = Math.cos(t);
+      const d = 1 + s * s;
+
+      let x = (A * c) / d;
+      let y = (A * 0.58 * s * c) / d;
+
+      const dt = 0.01;
+      const s2 = Math.sin(t + dt), c2 = Math.cos(t + dt), d2 = 1 + s2 * s2;
+      const dx = (A * c2) / d2 - x;
+      const dy = (A * 0.58 * s2 * c2) / d2 - y;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len;
+      const ny =  dx / len;
+
+      const wingSpread = 0.62 + 0.78 * Math.abs(c);
+      x += nx * radialOffset * wingSpread;
+      y += ny * radialOffset * wingSpread;
+
+      let z = Math.sin(t) * (A * 0.24) + normalOffset + zJitter;
+
+      const tiltZ = -0.14 + Math.sin(time * 0.4) * 0.025 + pointer.tx * 0.08;
+      const tiltX =  0.22 + Math.cos(time * 0.3) * 0.02  + pointer.ty * 0.10;
+
+      const x1 = x * Math.cos(tiltZ) - y * Math.sin(tiltZ);
+      const y1 = x * Math.sin(tiltZ) + y * Math.cos(tiltZ);
+      const y2 = y1 * Math.cos(tiltX) - z * Math.sin(tiltX);
+      const z2 = y1 * Math.sin(tiltX) + z * Math.cos(tiltX);
+
+      const fov = 1150 * DPR;
+      const scale = fov / (fov - z2);
+      return {
+        x: cx + x1 * scale,
+        y: cy + y2 * scale,
+        z: z2,
+        scale: scale
+      };
+    }
+
+    function randGauss(){
+      return (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
+    }
+
+    const COUNT = 2000;
+    const particles = [];
+    for(let i = 0; i < COUNT; i++){
+      const tier = Math.random();
+      const spread = tier < 0.46 ? 0.046 : (tier < 0.84 ? 0.10 : 0.19);
+      const isBright = Math.random() < 0.095;
+      particles.push({
+        t: Math.random() * Math.PI * 2,
+        rRatio: randGauss() * spread,
+        nRatio: randGauss() * 0.04,
+        zRatio: randGauss() * 0.032,
+        speed: (0.00055 + Math.random() * 0.0011) * (Math.random() < 0.14 ? 1.45 : 1),
+        size: isBright ? (1.35 + Math.random() * 1.05) : (0.48 + Math.random() * 0.95),
+        alpha: tier < 0.46
+          ? (0.46 + Math.random() * 0.46)
+          : (tier < 0.84 ? (0.28 + Math.random() * 0.46) : (0.14 + Math.random() * 0.30)),
+        twinklePhase: Math.random() * Math.PI * 2,
+        twinkleSpeed: 0.015 + Math.random() * 0.035,
+        bright: isBright
+      });
+    }
+
+    const bgStars = [];
+    for(let i = 0; i < 85; i++){
+      bgStars.push({
+        x: Math.random(),
+        y: Math.random(),
+        r: (0.35 + Math.random() * 0.85) * DPR,
+        a: 0.10 + Math.random() * 0.30,
+        p: Math.random() * Math.PI * 2,
+        s: 0.008 + Math.random() * 0.02
+      });
+    }
+
+    let time = 0;
+    function frame(){
+      requestAnimationFrame(frame);
+      if(!views.home.classList.contains('is-active')) return;
+
+      time += 0.016;
+      pointer.tx += (pointer.nx - pointer.tx) * 0.06;
+      pointer.ty += (pointer.ny - pointer.ty) * 0.06;
+      pointer.speedBoost += (pointer.targetBoost - pointer.speedBoost) * 0.08;
+      if(pointer.pulse > 0.001) pointer.pulse *= 0.94; else pointer.pulse = 0;
+
+      if(moonStage && brandWrap){
+        const mx = (-pointer.tx * 7).toFixed(2);
+        const my = (-pointer.ty * 7).toFixed(2);
+        moonStage.style.transform = 'translate3d(' + mx + 'px,' + my + 'px,0)';
+        const bx = (pointer.tx * 11).toFixed(2);
+        const by = (pointer.ty * 8).toFixed(2);
+        brandWrap.style.transform = 'translate(calc(-50% + ' + bx + 'px), calc(-46% + ' + by + 'px))';
+      }
+
+      syncCenter();
+      ctx.clearRect(0, 0, W, H);
+
+      for(const st of bgStars){
+        st.p += st.s;
+        const a = st.a * (0.55 + 0.45 * Math.sin(st.p));
+        ctx.fillStyle = 'rgba(240,244,252,' + a.toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(st.x * W, st.y * H, st.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+
+      const STEPS = 180;
+      ctx.lineWidth = 20 * DPR;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.beginPath();
+      for(let i = 0; i <= STEPS; i++){
+        const t = (i / STEPS) * Math.PI * 2;
+        const p = infinityPoint(t, 0, 0, 0, time);
+        if(i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+
+      const pulseExpand = 1 + pointer.pulse * 0.12;
+      for(let i = 0; i < COUNT; i++){
+        const pt = particles[i];
+        pt.t += pt.speed * pointer.speedBoost;
+        if(pt.t > Math.PI * 2) pt.t -= Math.PI * 2;
+        pt.twinklePhase += pt.twinkleSpeed;
+
+        const pos = infinityPoint(
+          pt.t,
+          pt.rRatio * A * pulseExpand,
+          pt.nRatio * A,
+          pt.zRatio * A,
+          time
+        );
+
+        let px = pos.x, py = pos.y;
+        if(pointer.active){
+          const dx = px - pointer.x;
+          const dy = py - pointer.y;
+          const dist2 = dx * dx + dy * dy;
+          const maxR = 110 * DPR;
+          if(dist2 < maxR * maxR && dist2 > 1){
+            const dist = Math.sqrt(dist2);
+            const push = (1 - dist / maxR) * 14 * DPR;
+            px += (dx / dist) * push;
+            py += (dy / dist) * push;
+          }
+        }
+
+        const depthFactor = 0.60 + 0.40 * ((pos.z / (A * 0.28)) * 0.5 + 0.5);
+        const tw = 0.74 + 0.26 * Math.sin(pt.twinklePhase);
+        const alpha = Math.min(1, Math.max(0.06, (pt.alpha + pointer.pulse * 0.25) * depthFactor * tw));
+        const radius = pt.size * DPR * pos.scale * (0.78 + 0.22 * depthFactor);
+
+        if(pt.bright){
+          const g = ctx.createRadialGradient(px, py, 0, px, py, radius * 4.2);
+          g.addColorStop(0, 'rgba(255,255,255,' + Math.min(1, alpha * 1.02).toFixed(3) + ')');
+          g.addColorStop(0.38, 'rgba(240,245,255,' + (alpha * 0.44).toFixed(3) + ')');
+          g.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(px, py, radius * 4.2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillStyle = 'rgba(248,250,255,' + alpha.toFixed(3) + ')';
+          ctx.beginPath();
+          ctx.arc(px, py, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      for(let i = ripples.length - 1; i >= 0; i--){
+        const rp = ripples[i];
+        rp.r += 4.5 * DPR;
+        rp.alpha *= 0.95;
+        ctx.strokeStyle = 'rgba(255,255,255,' + rp.alpha.toFixed(3) + ')';
+        ctx.lineWidth = 1.2 * DPR;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rp.r, 0, Math.PI * 2);
+        ctx.stroke();
+        if(rp.alpha < 0.015) ripples.splice(i, 1);
+      }
+
+      for(let i = trail.length - 1; i >= 0; i--){
+        const tr = trail[i];
+        tr.x += tr.vx;
+        tr.y += tr.vy;
+        tr.life -= 0.032;
+        if(tr.life <= 0){
+          trail.splice(i, 1);
+          continue;
+        }
+        ctx.fillStyle = 'rgba(255,255,255,' + (tr.life * 0.55).toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(tr.x, tr.y, tr.r * tr.life, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+    requestAnimationFrame(frame);
+
+    /* ============================================================
+     * 需求填写 + 3. 小票上用户 ID 前不加“填表人”字样 + 2. 修复小票图片点击下载
+     * ============================================================ */
+    const orderForm         = document.getElementById('orderForm');
+    const totalAmountEl     = document.getElementById('totalAmount');
+    const totalBreakdownEl  = document.getElementById('totalBreakdown');
+    const specialNoteWrap   = document.getElementById('specialNoteWrap');
+    const specialNoteInput  = document.getElementById('specialNoteInput');
+    const downloadBtn       = document.getElementById('downloadBtn');
+    const notesConfirmModal = document.getElementById('notesConfirmModal');
+    const modalTip          = document.getElementById('modalTip');
+    const modalBtnYes       = document.getElementById('modalBtnYes');
+    const modalBtnNo        = document.getElementById('modalBtnNo');
+
+    let latestReceiptDataUrl = '';
+    let latestFillerName     = '';
+
+    document.querySelectorAll('#serviceList .choice-item').forEach(function(item){
+      const cb = item.querySelector('input[type="checkbox"]');
+      cb.addEventListener('change', function(){
+        item.classList.toggle('is-checked', cb.checked);
+        calculateTotal();
+      });
+    });
+
+    document.querySelectorAll('.qty-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        const targetId = btn.getAttribute('data-for');
+        const step = parseInt(btn.getAttribute('data-step'), 10);
+        const input = document.getElementById(targetId);
+        const valSpan = document.getElementById(targetId + '_val');
+        const min = parseInt(input.getAttribute('data-min') || '1', 10);
+        let cur = parseInt(input.value || String(min), 10) + step;
+        if(cur < min) cur = min;
+        if(cur > 99) cur = 99;
+        input.value = String(cur);
+        valSpan.textContent = String(cur);
+        calculateTotal();
+      });
+    });
+
+    document.querySelectorAll('input[name="urgent"]').forEach(function(r){
+      r.addEventListener('change', calculateTotal);
+    });
+    document.querySelectorAll('input[name="has_special"]').forEach(function(r){
+      r.addEventListener('change', function(){
+        const isYes = document.querySelector('input[name="has_special"]:checked').value === 'yes';
+        specialNoteWrap.style.display = isYes ? 'block' : 'none';
+        specialNoteInput.required = isYes;
+      });
+    });
+
+    function calculateTotal(){
+      if(!orderForm) return { total: 0, hasOtherWidget: false, items: [], urgent: false };
+      const f = orderForm;
+      let base = 0;
+      let hasOtherWidget = false;
+      const selectedItems = [];
+
+      if(f.svc_global.checked){
+        base += 30;
+        selectedItems.push({ title: '全局美化', priceText: '30￥', note: f.note_global.value.trim() });
+      }
+      if(f.svc_pre_status.checked){
+        base += 3;
+        selectedItems.push({ title: '正文前状态栏', priceText: '3￥', note: f.note_pre_status.value.trim() });
+      }
+      if(f.svc_post_status.checked){
+        const qty = Math.max(3, parseInt(f.post_qty.value || '3', 10));
+        const sub = 5 + (qty - 3) * 3;
+        base += sub;
+        selectedItems.push({ title: '正文后状态栏 ×' + qty, priceText: sub + '￥', note: f.note_post_status.value.trim() });
+      }
+      if(f.svc_sidebar.checked){
+        const qty = Math.max(1, parseInt(f.sidebar_qty.value || '1', 10));
+        const sub = qty * 5;
+        base += sub;
+        selectedItems.push({ title: '侧边栏 ×' + qty, priceText: sub + '￥', note: f.note_sidebar.value.trim() });
+      }
+      if(f.svc_splash.checked){
+        base += 5;
+        selectedItems.push({ title: '开屏动画', priceText: '5￥', note: f.note_splash.value.trim() });
+      }
+      if(f.svc_char_card.checked){
+        base += 5;
+        selectedItems.push({ title: '角色介绍组件', priceText: '5￥', note: f.note_char_card.value.trim() });
+      }
+      if(f.svc_npc_card.checked){
+        base += 5;
+        selectedItems.push({ title: 'npc介绍组件', priceText: '5￥', note: f.note_npc_card.value.trim() });
+      }
+      if(f.svc_pet.checked){
+        base += 15;
+        selectedItems.push({ title: '桌宠 · 自带q版图', priceText: '15￥', note: f.note_pet.value.trim() });
+      }
+      if(f.svc_other_widget.checked){
+        base += 5;
+        hasOtherWidget = true;
+        selectedItems.push({ title: '其余小组件', priceText: '5￥起步', note: f.note_other_widget.value.trim() });
+      }
+
+      const isUrgent = f.querySelector('input[name="urgent"]:checked').value === 'yes';
+      const total = isUrgent ? base * 2 : base;
+
+      if(selectedItems.length === 0){
+        totalBreakdownEl.textContent = '暂未勾选项目';
+        totalAmountEl.innerHTML = '0￥';
+      } else {
+        const names = selectedItems.map(function(x){ return x.title + ' ' + x.priceText; }).join(' + ');
+        totalBreakdownEl.textContent = names + (isUrgent ? '  ·  加急 金额x2' : '');
+        totalAmountEl.innerHTML = total + '￥' + (hasOtherWidget ? '<span class="plus">起</span>' : '');
+      }
+
+      return {
+        base: base,
+        total: total,
+        hasOtherWidget: hasOtherWidget,
+        items: selectedItems,
+        urgent: isUrgent
+      };
+    }
+
+    function wrapText(c2d, text, maxW){
+      if(!text) return ['—'];
+      const chars = String(text).split('');
+      let line = '', lines = [];
+      for(const ch of chars){
+        if(c2d.measureText(line + ch).width > maxW && line){
+          lines.push(line);
+          line = ch;
+        } else {
+          line += ch;
+        }
+      }
+      if(line) lines.push(line);
+      return lines;
+    }
+
+    function drawDashedLine(c2d, x1, x2, y, color){
+      c2d.save();
+      c2d.strokeStyle = color || '#cccccc';
+      c2d.lineWidth = 1;
+      c2d.setLineDash([5, 4]);
+      c2d.beginPath();
+      c2d.moveTo(x1, y);
+      c2d.lineTo(x2, y);
+      c2d.stroke();
+      c2d.restore();
+    }
+
+    // 生成小票样式（Receipt Style）需求单预览图：3. 用户 ID 前不加“填表人”字样，直接醒目展示克莱因蓝用户 ID
+    function renderReceiptCard(d){
+      const c = document.getElementById('exportCanvas');
+      const c2d = c.getContext('2d');
+      const S = 2;
+      const Wc = 500;
+      const padX = 38;
+      const innerW = Wc - padX * 2;
+
+      c2d.font = '14px "Songti SC","SimSun",serif';
+      let itemsH = 0;
+      d.calc.items.forEach(function(it){
+        itemsH += 28;
+        if(it.note){
+          const nLines = wrapText(c2d, '备注：' + it.note, innerW - 18);
+          itemsH += nLines.length * 22 + 8;
+        }
+      });
+
+      const reqRows = [
+        { k: '整体风格', v: d.reqStyle },
+        { k: '偏好色系', v: d.reqColor },
+        { k: '核心元素', v: d.reqElement },
+        { k: '特殊要求', v: d.hasSpecial ? d.specialNote : '无' }
+      ];
+      let reqH = 0;
+      reqRows.forEach(function(r){
+        const vLines = wrapText(c2d, r.v, innerW - 82);
+        r.lines = vLines;
+        reqH += Math.max(24, vLines.length * 23) + 10;
+      });
+
+      const zigH = 12;
+      const Hc = 250 + itemsH + 120 + reqH + 220;
+      c.width  = Wc * S;
+      c.height = Hc * S;
+      c2d.scale(S, S);
+
+      c2d.clearRect(0, 0, Wc, Hc);
+
+      // 构造上下锯齿小票裁剪路径
+      c2d.save();
+      c2d.beginPath();
+      const toothW = 12.5;
+      const teeth = Math.floor(Wc / toothW);
+      c2d.moveTo(0, zigH);
+      for(let i = 0; i < teeth; i++){
+        c2d.lineTo((i + 0.5) * toothW, 0);
+        c2d.lineTo((i + 1) * toothW, zigH);
+      }
+      c2d.lineTo(Wc, Hc - zigH);
+      for(let i = teeth; i > 0; i--){
+        c2d.lineTo((i - 0.5) * toothW, Hc);
+        c2d.lineTo((i - 1) * toothW, Hc - zigH);
+      }
+      c2d.closePath();
+
+      c2d.fillStyle = '#fcfcfa';
+      c2d.fill();
+      c2d.clip();
+
+      // 顶部小票抬头
+      let y = 36;
+      c2d.fillStyle = '#111111';
+      c2d.textAlign = 'center';
+      c2d.textBaseline = 'top';
+      c2d.font = '300 28px "Cormorant Garamond","Songti SC","SimSun",serif';
+      c2d.fillText('S H I R A T O R I', Wc / 2, y);
+
+      y += 34;
+      c2d.fillStyle = '#777777';
+      c2d.font = '11px "Songti SC","SimSun",serif';
+      c2d.fillText('FOR AESTHETIC COMMISSIONS · 客单需求小票', Wc / 2, y);
+
+      y += 26;
+      drawDashedLine(c2d, padX, Wc - padX, y, '#bbbbbb');
+      y += 14;
+
+      // 3. 右上角直接醒目展示克莱因蓝用户 ID（前面不加“填表人”字样）
+      c2d.textAlign = 'left';
+      c2d.fillStyle = '#666666';
+      c2d.font = '12px "Songti SC","SimSun",serif';
+      const orderNo = 'NO.' + String(Date.now()).slice(-6);
+      c2d.fillText('单号：' + orderNo, padX, y + 4);
+
+      c2d.textAlign = 'right';
+      c2d.fillStyle = '#002FA7';
+      c2d.font = '600 18px "Songti SC","SimSun",serif';
+      c2d.fillText(d.fillerName, Wc - padX, y);
+
+      y += 26;
+      c2d.textAlign = 'left';
+      c2d.fillStyle = '#888888';
+      c2d.font = '11.5px "Songti SC","SimSun",serif';
+      c2d.fillText('时间：' + d.date, padX, y);
+
+      y += 22;
+      drawDashedLine(c2d, padX, Wc - padX, y, '#bbbbbb');
+      y += 18;
+
+      // 01 项目清单表头
+      c2d.textAlign = 'left';
+      c2d.fillStyle = '#111111';
+      c2d.font = '600 13px "Songti SC","SimSun",serif';
+      c2d.fillText('01  项目明细 / ITEM', padX, y);
+      c2d.textAlign = 'right';
+      c2d.fillText('金额 / PRICE', Wc - padX, y);
+      y += 26;
+
+      // 逐条绘制所选项目
+      d.calc.items.forEach(function(it){
+        c2d.textAlign = 'left';
+        c2d.fillStyle = '#111111';
+        c2d.font = '14.5px "Songti SC","SimSun",serif';
+        c2d.fillText(it.title, padX, y);
+
+        c2d.textAlign = 'right';
+        c2d.fillStyle = '#111111';
+        c2d.font = '600 14.5px "Songti SC","SimSun",serif';
+        c2d.fillText(it.priceText, Wc - padX, y);
+        y += 26;
+
+        if(it.note){
+          c2d.textAlign = 'left';
+          c2d.fillStyle = '#002FA7';
+          c2d.fillRect(padX + 4, y + 3, 2, 14);
+          c2d.font = '13px "Songti SC","SimSun",serif';
+          const nLines = wrapText(c2d, '备注：' + it.note, innerW - 18);
+          nLines.forEach(function(ln){
+            c2d.fillText(ln, padX + 12, y);
+            y += 22;
+          });
+          y += 6;
+        }
+      });
+
+      y += 6;
+      drawDashedLine(c2d, padX, Wc - padX, y, '#cccccc');
+      y += 18;
+
+      // 02 加急 & 03 聊天背景图
+      c2d.textAlign = 'left';
+      c2d.fillStyle = '#111111';
+      c2d.font = '600 13.5px "Songti SC","SimSun",serif';
+      c2d.fillText('02  是否需要加急', padX, y);
+      c2d.textAlign = 'right';
+      c2d.fillStyle = d.calc.urgent ? '#002FA7' : '#333333';
+      c2d.font = '13.5px "Songti SC","SimSun",serif';
+      c2d.fillText(d.calc.urgent ? '需要 · 金额x2' : '不需要', Wc - padX, y);
+      y += 28;
+
+      c2d.textAlign = 'left';
+      c2d.fillStyle = '#111111';
+      c2d.font = '600 13.5px "Songti SC","SimSun",serif';
+      c2d.fillText('03  聊天背景char图', padX, y);
+      c2d.textAlign = 'right';
+      c2d.fillStyle = '#002FA7';
+      c2d.font = '13.5px "Songti SC","SimSun",serif';
+      c2d.fillText(d.bgChar, Wc - padX, y);
+      y += 26;
+
+      drawDashedLine(c2d, padX, Wc - padX, y, '#cccccc');
+      y += 18;
+
+      // 04 具体要求 & 05 特殊要求
+      c2d.textAlign = 'left';
+      c2d.fillStyle = '#111111';
+      c2d.font = '600 13.5px "Songti SC","SimSun",serif';
+      c2d.fillText('04 - 05  具体要求与备注', padX, y);
+      y += 26;
+
+      reqRows.forEach(function(r){
+        c2d.textAlign = 'left';
+        c2d.fillStyle = '#555555';
+        c2d.font = '13.5px "Songti SC","SimSun",serif';
+        c2d.fillText(r.k + '：', padX, y);
+
+        c2d.fillStyle = '#002FA7';
+        c2d.font = '14px "Songti SC","SimSun",serif';
+        r.lines.forEach(function(ln, i){
+          c2d.fillText(ln, padX + 76, y + i * 23);
+        });
+        y += Math.max(24, r.lines.length * 23) + 10;
+      });
+
+      y += 6;
+      drawDashedLine(c2d, padX, Wc - padX, y, '#111111');
+      y += 20;
+
+      // 底部总金额结算
+      c2d.textAlign = 'left';
+      c2d.fillStyle = '#111111';
+      c2d.font = '600 15px "Songti SC","SimSun",serif';
+      c2d.fillText('TOTAL / 预估总金额', padX, y + 6);
+
+      const priceStr = d.calc.total + '￥' + (d.calc.hasOtherWidget ? ' 起' : '') + (d.calc.urgent ? ' · 已含金额x2' : '');
+      c2d.textAlign = 'right';
+      c2d.fillStyle = '#002FA7';
+      c2d.font = '600 24px "Songti SC","SimSun",serif';
+      c2d.fillText(priceStr, Wc - padX, y);
+      y += 42;
+
+      drawDashedLine(c2d, padX, Wc - padX, y, '#cccccc');
+      y += 20;
+
+      // 小票仿真条形码装饰 + @shiratori 水印
+      const barW = 180;
+      let bx = (Wc - barW) / 2;
+      c2d.fillStyle = '#222222';
+      for(let i = 0; i < 38; i++){
+        const bw = (i % 3 === 0) ? 3 : ((i % 2 === 0) ? 1.5 : 1);
+        c2d.fillRect(bx, y, bw, 26);
+        bx += bw + ((i % 4 === 0) ? 3 : 2);
+      }
+      y += 36;
+
+      c2d.textAlign = 'center';
+      c2d.fillStyle = '#777777';
+      c2d.font = '12px "Songti SC","SimSun",serif';
+      c2d.fillText('@shiratori', Wc / 2, y);
+
+      c2d.restore();
+
+      latestReceiptDataUrl = c.toDataURL('image/png');
+      latestFillerName = d.fillerName;
+      prepareReceiptDownloadResources();
+
+      const previewImg = document.getElementById('exportPreviewImg');
+      if(previewImg){
+        previewImg.src = latestReceiptDataUrl;
+      }
+
+      const area = document.getElementById('exportArea');
+      area.style.display = 'block';
+      area.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    if(orderForm){
+      orderForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        const f = e.target;
+        const fillerName = f.filler_name.value.trim();
+        if(!fillerName){
+          alert('请先在右上角填写必填项「填表人」');
+          f.filler_name.focus();
+          return;
+        }
+        const calc = calculateTotal();
+        if(calc.items.length === 0){
+          alert('请至少勾选一项「01 您需要？」中的美化项目');
+          return;
+        }
+        const hasSpecial = f.querySelector('input[name="has_special"]:checked').value === 'yes';
+        const bgChar = f.querySelector('input[name="bg_char"]:checked').value;
+
+        renderReceiptCard({
+          fillerName:  fillerName,
+          calc:        calc,
+          bgChar:      bgChar,
+          reqStyle:    f.req_style.value.trim(),
+          reqColor:    f.req_color.value.trim(),
+          reqElement:  f.req_element.value.trim(),
+          hasSpecial:  hasSpecial,
+          specialNote: hasSpecial ? f.special_note.value.trim() : '',
+          date:        new Date().toLocaleString('zh-CN')
+        });
+      });
+    }
+
+    /* ============================================================
+     * 彻底修复小票需求单点击下载：
+     * 1. 预先生成 PNG Blob 与 ObjectURL，直接挂载到弹窗内原生 <a download> 按钮上（已浏览过注意事项时，用户点击“是”即触发浏览器原生 <a> 下载）；
+     * 2. 同时提供 showSaveFilePicker（系统原生另存为对话框，支持在受限 WebView/预览面板中直接选路径保存）与 DataURL 双重兜底；
+     * 3. 严格保留“是否已经阅读完毕注意事项？”规则：若用户从未点击过「注意事项」界面，则无论点什么都无法下载，并自动跳转至「注意事项」页面。
+     * ============================================================ */
+    const downloadStatusTip = document.getElementById('downloadStatusTip');
+    let latestReceiptBlob    = null;
+    let latestReceiptBlobUrl = '';
+    let latestReceiptFile    = 'SHIRATORI需求小票.png';
+
+    function dataURLToBlob(dataURL){
+      const parts = dataURL.split(',');
+      const mime = parts[0].match(/:(.*?);/)[1] || 'image/png';
+      const bstr = atob(parts[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], { type: mime });
+    }
+
+    function prepareReceiptDownloadResources(){
+      if(!latestReceiptDataUrl) return;
+      const safeName = (latestFillerName || '客单').replace(/[\\/:*?"<>|\s]/g, '_');
+      latestReceiptFile = 'SHIRATORI需求小票_' + safeName + '.png';
+      try {
+        if(latestReceiptBlobUrl){
+          URL.revokeObjectURL(latestReceiptBlobUrl);
+        }
+        latestReceiptBlob = dataURLToBlob(latestReceiptDataUrl);
+        latestReceiptBlobUrl = URL.createObjectURL(latestReceiptBlob);
+      } catch(e){
+        latestReceiptBlob = null;
+        latestReceiptBlobUrl = latestReceiptDataUrl;
+      }
+      syncModalYesLinkAttr();
+    }
+
+    function syncModalYesLinkAttr(){
+      if(!modalBtnYes) return;
+      if(hasVisitedNotes && latestReceiptDataUrl){
+        modalBtnYes.setAttribute('href', latestReceiptBlobUrl || latestReceiptDataUrl);
+        modalBtnYes.setAttribute('download', latestReceiptFile);
+      } else {
+        modalBtnYes.setAttribute('href', 'javascript:void(0)');
+        modalBtnYes.removeAttribute('download');
+      }
+    }
+
+    function openNotesModal(){
+      modalTip.textContent = '';
+      if(downloadStatusTip) downloadStatusTip.textContent = '';
+      syncModalYesLinkAttr();
+      notesConfirmModal.classList.add('is-open');
+    }
+
+    function closeNotesModal(){
+      notesConfirmModal.classList.remove('is-open');
+    }
+
+    if(downloadBtn){
+      downloadBtn.addEventListener('click', function(){
+        if(!latestReceiptDataUrl) return;
+        openNotesModal();
+      });
+    }
+
+    modalBtnYes.addEventListener('click', function(e){
+      // 如果用户从未点击过「注意事项」那个界面，则无论选择什么都无法下载图片，并自动跳转至「注意事项」
+      if(!hasVisitedNotes){
+        e.preventDefault();
+        modalTip.textContent = '检测到您还未点击浏览过「注意事项」页面，正在为您自动跳转阅读……';
+        setTimeout(function(){
+          closeNotesModal();
+          switchView('notes', true);
+        }, 850);
+        return;
+      }
+
+      // 已浏览过「注意事项」：允许下载图片
+      closeNotesModal();
+
+      // 若浏览器支持原生文件保存对话框且处于非顶层 iframe（如内置预览器），优先调起系统保存窗口确保100%落盘
+      const isInIframe = (function(){ try { return window.self !== window.top; } catch(err){ return true; } })();
+      if(isInIframe && window.showSaveFilePicker && latestReceiptBlob){
+        e.preventDefault();
+        window.showSaveFilePicker({
+          suggestedName: latestReceiptFile,
+          types: [{
+            description: 'PNG Image',
+            accept: { 'image/png': ['.png'] }
+          }]
+        }).then(function(handle){
+          return handle.createWritable().then(function(writable){
+            return writable.write(latestReceiptBlob).then(function(){
+              return writable.close();
+            });
+          });
+        }).then(function(){
+          if(downloadStatusTip){
+            downloadStatusTip.textContent = '✓ 小票图片已成功保存：' + latestReceiptFile;
+          }
+        }).catch(function(err){
+          if(err && err.name === 'AbortError') return;
+          // 回退为原生 <a> 下载
+          const a = document.createElement('a');
+          a.href = latestReceiptBlobUrl || latestReceiptDataUrl;
+          a.download = latestReceiptFile;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          if(downloadStatusTip){
+            downloadStatusTip.textContent = '✓ 已触发小票下载（' + latestReceiptFile + '），也可直接右键上方小票图片另存为';
+          }
+        });
+        return;
+      }
+
+      // 标准浏览器环境：modalBtnYes 本身已是带 href=blobUrl 和 download=fileName 的原生 <a> 标签，直接由浏览器原生执行下载
+      if(downloadStatusTip){
+        downloadStatusTip.textContent = '✓ 已开始下载小票图片：' + latestReceiptFile;
+      }
+    });
+
+    modalBtnNo.addEventListener('click', function(){
+      closeNotesModal();
+      switchView('notes', true);
+    });
+
+    notesConfirmModal.addEventListener('click', function(e){
+      if(e.target === notesConfirmModal){
+        closeNotesModal();
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
