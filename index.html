@@ -1505,63 +1505,107 @@
     }
 
     /* ============================================================
-     * 3. 小票需求单字体挂载（修复移动端中文无法显示 / 缺字）
-     *    Canvas 不会等待 Web Font 加载完成，必须在绘制前用 FontFaceSet /
-     *    FontFace API 把 assets/SourceHanSerifCN-Light.woff2 真正挂载到
-     *    document.fonts，并在字体就绪后重绘一次。
-     *    桌面端字体栈保持原来的宋体优先（视觉不变），移动端改为思源宋体优先。
+     * 3. 小票需求单字体挂载（含「下载下来的图片也必须带字体」）
+     *    Canvas 不会等待 Web Font，且导出的 PNG 是位图：一旦在字体就绪前
+     *    生成 dataURL / Blob，下载到的就永远是那一版旧图。这里做三件事：
+     *    ① CSS @font-face 显式 load 后用 FontFaceSet.check 校验真的命中；
+     *    ② 失败时 fetch WOFF2 二进制、经 FontFace API 显式挂载
+     *       （不受 @media / iframe / 字体未被 DOM 使用等因素影响）；
+     *    ③ 字体就绪后重绘，并在「点下载」「点是」两个时机再次同步刷新
+     *       dataURL / Blob / blobUrl / <a href> / 预览 <img>，
+     *       保证落盘的 PNG 一定是挂载字体后绘制的那一版。
      * ============================================================ */
+    const RECEIPT_FONT_URL    = 'assets/SourceHanSerifCN-Light.woff2';
+    const RECEIPT_FONT_SAMPLE = '需求填写小票备注金额克莱因蓝SHIRATORI聊天背景作品回收再使用';
+    let receiptFontPromise   = null;
+    let receiptFontReady     = false;
+    let lastReceiptData      = null;
+    let lastRenderedWithFont = false;
+
     function receiptFontStack(){
+      // 保持原有字体栈顺序不变：移动端思源宋体优先、桌面端宋体优先；
+      // 字体挂载成功后，桌面端缺少 Songti SC 时也能命中 ShiratoriSerif 而非系统默认字体。
       const isMobile = window.matchMedia && window.matchMedia('(max-width:640px)').matches;
       return isMobile
         ? '"ShiratoriSerif","Songti SC","SimSun","宋体",serif'
         : '"Songti SC","ShiratoriSerif","SimSun","宋体",serif';
     }
 
-    let receiptFontPromise = null;
-    let lastReceiptData    = null;
+    function fontIsUsable(){
+      try {
+        return !!(document.fonts && document.fonts.check &&
+                  document.fonts.check('16px "ShiratoriSerif"', RECEIPT_FONT_SAMPLE));
+      } catch(e){ return false; }
+    }
 
     function ensureReceiptFont(){
+      if(receiptFontReady) return Promise.resolve(true);
       if(receiptFontPromise) return receiptFontPromise;
-      const sample = '需求填写小票备注金额克莱因蓝SHIRATORI';
-      let p;
-      if(document.fonts && document.fonts.load){
-        p = Promise.all([
-          document.fonts.load('300 16px "ShiratoriSerif"', sample),
-          document.fonts.load('600 16px "ShiratoriSerif"', sample)
-        ]).then(function(){ return true; }).catch(function(){ return false; });
-      } else {
-        p = Promise.resolve(false);
-      }
-      // 部分移动端 WebView 不会主动加载未被 DOM 使用的 @font-face，用 FontFace API 显式挂载兜底
-      receiptFontPromise = p.then(function(loadedByCSS){
-        if(loadedByCSS || !window.FontFace || !document.fonts) return loadedByCSS;
-        try {
-          const face = new FontFace(
-            'ShiratoriSerif',
-            'url("assets/SourceHanSerifCN-Light.woff2") format("woff2")',
-            { weight: '300 900' }
-          );
-          return face.load().then(function(f){
-            document.fonts.add(f);
-            return true;
-          }).catch(function(){ return false; });
-        } catch(e){ return false; }
-      });
+
+      // ① CSS 声明路径：显式加载小票用到的字重，再用 check 确认字体确实可用
+      const cssPath = (document.fonts && document.fonts.load)
+        ? Promise.all([
+            document.fonts.load('300 16px "ShiratoriSerif"', RECEIPT_FONT_SAMPLE),
+            document.fonts.load('600 16px "ShiratoriSerif"', RECEIPT_FONT_SAMPLE)
+          ]).then(function(){ return fontIsUsable(); })
+           .catch(function(){ return false; })
+        : Promise.resolve(false);
+
+      // ② 二进制兜底：直接把 WOFF2 挂进 document.fonts（GitHub Pages / 移动端 WebView 均可用）
+      const binaryPath = function(){
+        return new Promise(function(resolve){
+          if(!window.FontFace || !document.fonts || !window.fetch){ resolve(false); return; }
+          fetch(RECEIPT_FONT_URL, { credentials: 'same-origin' })
+            .then(function(r){
+              if(!r.ok) throw new Error('font http ' + r.status);
+              return r.arrayBuffer();
+            })
+            .then(function(buf){
+              const face = new FontFace('ShiratoriSerif', buf, { weight: '300 900', style: 'normal' });
+              return face.load().then(function(f){
+                document.fonts.add(f);
+                return true;
+              });
+            })
+            .then(function(){ resolve(true); })
+            .catch(function(){ resolve(false); });
+        });
+      };
+
+      receiptFontPromise = cssPath
+        .then(function(ok){ return ok ? true : binaryPath(); })
+        .then(function(ok){
+          if(!ok) return false;
+          if(document.fonts && document.fonts.ready){
+            return document.fonts.ready.then(function(){ return true; }).catch(function(){ return true; });
+          }
+          return true;
+        })
+        .then(function(ok){
+          receiptFontReady = !!ok;
+          if(!receiptFontReady) receiptFontPromise = null;   // 失败不缓存，允许下次重试
+          return receiptFontReady;
+        });
       return receiptFontPromise;
     }
 
-    // 移动端进入页面即预热字体，生成小票时无需额外等待
+    // 移动端进页面即预热；桌面端等生成小票时再按需加载，不额外消耗流量
     if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){
       ensureReceiptFont();
+    }
+
+    // 用当前（已挂载）字体重绘，并同步刷新导出的 dataURL / Blob / 链接 / 预览图
+    function refreshReceiptForDownload(){
+      if(!lastReceiptData) return;
+      renderReceiptCard(lastReceiptData, true);
     }
 
     function requestReceiptRender(d){
       lastReceiptData = d;
       renderReceiptCard(d, false);   // 先立即出图，避免字体加载慢时白屏
       ensureReceiptFont().then(function(ok){
-        if(ok && lastReceiptData){
-          renderReceiptCard(lastReceiptData, true);  // 字体就绪后用正确字形重绘（不重复滚动）
+        if(ok && lastReceiptData === d && !lastRenderedWithFont){
+          refreshReceiptForDownload();   // 字体就绪后用正确字形重绘（不重复滚动）
         }
       });
     }
@@ -1721,7 +1765,7 @@
       c2d.textAlign = 'left';
       c2d.fillStyle = '#111111';
       c2d.font = '600 13.5px ' + RF;
-      c2d.fillText('03  聊天背景char图', padX, y);
+      c2d.fillText('03  聊天背景', padX, y);
       c2d.textAlign = 'right';
       c2d.fillStyle = '#002FA7';
       c2d.font = '13.5px ' + RF;
@@ -1790,6 +1834,8 @@
 
       c2d.restore();
 
+      // 记录本次导出是否使用了已挂载的字体：下载链路据此判断是否需要先同步重绘
+      lastRenderedWithFont = receiptFontReady;
       latestReceiptDataUrl = c.toDataURL('image/png');
       latestFillerName = d.fillerName;
       prepareReceiptDownloadResources();
@@ -1903,6 +1949,12 @@
     if(downloadBtn){
       downloadBtn.addEventListener('click', function(){
         if(!latestReceiptDataUrl) return;
+        // 用户阅读弹窗提示期间完成字体挂载与重绘，保证待下载的是带字体的那一版
+        ensureReceiptFont().then(function(ok){
+          if(ok && lastReceiptData && !lastRenderedWithFont){
+            refreshReceiptForDownload();
+          }
+        });
         openNotesModal();
       });
     }
@@ -1917,6 +1969,12 @@
           switchView('notes', true);
         }, 850);
         return;
+      }
+
+      // 同步守卫：若字体已挂载但待下载的图片仍是挂载前那版，立即重绘并刷新 href / Blob，
+      // 确保落到磁盘的 PNG 一定带字体（重绘会同步更新 dataURL、Blob、blobUrl 与预览图）
+      if(receiptFontReady && lastReceiptData && !lastRenderedWithFont){
+        refreshReceiptForDownload();
       }
 
       // 已浏览过「注意事项」：允许下载图片
