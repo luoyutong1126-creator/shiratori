@@ -9,8 +9,25 @@
   --dim:#525662;
 }
 
+/* ============ 移动端专用字体：思源宋体 CN Light
+   来源：https://shswy.qzz.io/file/1782233535905_思源宋体_CN_Light字体.ttf
+   已子集化为 WOFF2（覆盖 GB2312 全部常用简体汉字 + 站内全部字符），
+   从 14.5MB 压缩到约 1.4MB，保证手机端秒开且不缺字。 ============ */
+@font-face{
+  font-family:"ShiratoriSerif";
+  src:url("assets/SourceHanSerifCN-Light.woff2") format("woff2");
+  font-weight:300;
+  font-style:normal;
+  font-display:swap;
+}
+
 *{margin:0;padding:0;box-sizing:border-box;}
-html{height:auto;}
+html{
+  height:auto;
+  max-width:100%;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
 body{
   font-family:"Songti SC","STSong","NSimSun","SimSun","宋体",serif;
   background:var(--ink);
@@ -1358,27 +1375,205 @@ a,button{color:inherit;text-decoration:none;font-family:inherit;}
   color:var(--klein);
 }
 
+/* ============================================================
+ * 移动端适配（<=640px）
+ * 1) 全站统一使用思源宋体 CN Light，修复手机端宋体缺失 / 系统自动放大导致的字体异常
+ * 2) 短文本全部锁定单行，播放器、导航、目录行重新排版，避免窄屏折断换行
+ * ============================================================ */
 @media (max-width:640px){
+  *, *::before, *::after{
+    font-family:"ShiratoriSerif","Songti SC","SimSun",serif !important;
+  }
+  html,body{max-width:100%;overflow-x:hidden;}
+
+  /* 加载页 */
+  .loader-moons{gap:clamp(10px,3vw,16px);}
+  .loader-moon{width:clamp(21px,6vw,26px);height:clamp(21px,6vw,26px);}
+  .loader-welcome{font-size:clamp(20px,6vw,26px);letter-spacing:.3em;text-indent:.3em;white-space:nowrap;}
+  .loader-skip{font-size:10px;}
+
+  /* 首页：使用动态视口高度，避免手机地址栏遮挡底部水印 */
+  .home{
+    height:100vh;
+    height:100dvh;
+    min-height:100vh;
+    min-height:100dvh;
+    padding:18px 16px 14px;
+  }
+  .home-header{font-size:9px;letter-spacing:.1em;white-space:nowrap;gap:8px;}
+  .home-header .dot{margin-right:6px;width:4px;height:4px;}
+  .contact-trigger{font-size:9px;letter-spacing:.06em;gap:4px;padding:4px 0;white-space:nowrap;}
+  .hero-stage{min-height:240px;}
+  .moon-stage{width:min(260px,36vh,60vw);}
+  .brand{
+    font-size:clamp(28px,10vw,46px);
+    gap:clamp(3px,1.6vw,9px);
+    transform:scaleY(1.6);
+    white-space:nowrap;
+  }
+  .brand::before{white-space:nowrap;letter-spacing:.1em;}
+  .brand-wrap{max-width:96vw;}
+  .brand-sub{margin-top:18px;font-size:9px;letter-spacing:.16em;text-indent:.16em;white-space:nowrap;}
+  .home-footer{gap:14px;}
+
+  /* 音乐播放器：歌名独占一行、控制区独占一行，彻底避免互相挤压换行 */
+  .ins-player{width:100%;gap:9px;padding:0 2px 2px;}
+  .ins-player-top{flex-wrap:wrap;gap:8px;justify-content:space-between;}
+  .ins-song-info{flex:1 1 100%;min-width:0;gap:8px;}
+  .ins-pentagram{width:15px;height:15px;}
+  .ins-title{font-size:12px;letter-spacing:.08em;white-space:nowrap;}
+  .ins-meta-right{flex:1 1 100%;justify-content:space-between;gap:8px;}
+  .ins-controls{gap:8px;}
+  .ins-btn{padding:5px 8px;opacity:.9;}
+  .ins-btn svg{width:15px;height:15px;}
+  .ins-btn-play svg{width:14px;height:14px;}
+  .ins-mode-label{display:none;}
+  .ins-time{min-width:auto;font-size:10px;letter-spacing:.02em;white-space:nowrap;}
+  .ins-progress-wrap{height:14px;}
+
+  /* 三个入口：横向等分，中文标题与英文副标严格单行 */
+  .options{flex-wrap:nowrap;gap:0;width:100%;justify-content:space-between;}
+  .option{flex:1 1 0;min-width:0;padding:5px 0;}
+  .option .phase{width:18px;height:18px;margin-bottom:8px;}
+  .option .zh{
+    font-size:clamp(11px,3.2vw,13px);
+    letter-spacing:.02em;
+    text-indent:.02em;
+    white-space:nowrap;
+  }
+  .option .en{font-size:8px;letter-spacing:.08em;text-indent:.08em;margin-top:5px;white-space:nowrap;}
+  .option .dot-indicator{margin-top:7px;}
+  .watermark{font-size:10px;letter-spacing:.14em;text-indent:.14em;white-space:nowrap;}
+
+  /* 子页面顶栏：品牌一行、导航一行，所有链接不折行 */
+  .topbar{padding:20px 16px 10px;flex-wrap:wrap;gap:10px;}
+  .brand-sm{font-size:15px;letter-spacing:.16em;white-space:nowrap;}
+  .sub-nav{width:100%;gap:6px;flex-wrap:nowrap;justify-content:space-between;}
+  .sub-nav-link{font-size:11px;letter-spacing:0;white-space:nowrap;padding:4px 0;}
+  .back{font-size:11px;letter-spacing:0;white-space:nowrap;}
+  .page-inner{padding:22px 16px 48px;}
+  .page h1{font-size:22px;letter-spacing:.08em;white-space:nowrap;}
+  .page .sub{font-size:12.5px;line-height:1.9;letter-spacing:.01em;margin-bottom:24px;}
+  .divider{margin-bottom:28px;}
+  .page-watermark{padding:14px 0 30px;font-size:10px;letter-spacing:.14em;}
+
+  /* 右上角「填表人」：保持右对齐、不折行 */
+  .order-head-row{flex-direction:column;gap:10px;}
+  .order-head-left{min-width:0;}
+  .filler-box{align-items:flex-end;margin-bottom:6px;}
+  .filler-label{font-size:12px;letter-spacing:.08em;white-space:nowrap;}
+  .filler-input{width:min(220px,62vw);font-size:16px;text-align:right;white-space:nowrap;}
+
+  /* 表单标题：提示语整体另起一行，标题本身不被折断 */
+  .form-section{margin-bottom:32px;}
+  .section-title{
+    font-size:15px;
+    letter-spacing:.04em;
+    gap:6px;
+    flex-wrap:wrap;
+    white-space:nowrap;
+    margin-bottom:14px;
+  }
+  .section-title .hint{flex:0 0 100%;font-size:11px;letter-spacing:0;white-space:nowrap;}
+
+  /* 目录行：第一行「名称 + 点线 + 价格」，第二行「说明小字 / 数量器」，全部单行 */
+  .choice-list{gap:8px;}
+  .choice-item{padding:8px 0 10px;}
+  .choice-head{flex-wrap:wrap;gap:6px 8px;align-items:center;}
+  .choice-label{
+    flex:0 1 auto;
+    max-width:calc(100% - 86px);
+    min-width:0;
+    gap:8px;
+    font-size:14px;
+    letter-spacing:0;
+  }
+  .choice-label > span{white-space:nowrap;}
+  .choice-label input[type="checkbox"],
+  .choice-label input[type="radio"]{width:14px;height:14px;flex-shrink:0;}
+  .choice-subdesc{
+    display:block;
+    margin-left:0;
+    margin-top:2px;
+    font-size:10.5px;
+    letter-spacing:0;
+    white-space:nowrap;
+  }
+  .catalog-dots{order:2;flex:1 1 24px;min-width:12px;margin:0 2px;}
+  .catalog-price{order:3;font-size:13px;white-space:nowrap;}
+  .qty-stepper{order:4;flex:0 0 100%;justify-content:flex-end;font-size:11px;gap:5px;margin-top:2px;white-space:nowrap;}
+  .choice-item.is-checked .qty-stepper{display:flex;}
+  .choice-note{padding-left:22px;margin-top:8px;}
+  .choice-note input{font-size:16px;white-space:nowrap;text-overflow:ellipsis;}
+  .radio-catalog{gap:8px;}
+  .radio-catalog .choice-head{flex-wrap:nowrap;gap:8px;}
+  .radio-row{gap:18px;flex-wrap:nowrap;}
+  .radio-row .choice-label{white-space:nowrap;}
+  .field{margin-bottom:18px;}
+  .field label{font-size:13px;letter-spacing:.02em;white-space:nowrap;}
+  .field input,.field textarea{font-size:16px;letter-spacing:0;}
   .row{flex-direction:column;gap:0;}
-  .options{gap:28px 36px;}
-  .home-header{font-size:10px;letter-spacing:.18em;}
-  .contact-trigger{font-size:10px;letter-spacing:.16em;}
-  .sub-nav{gap:12px;}
-  .ins-player{
-    width:92vw;
+
+  /* 结算栏与按钮：金额与标签同一行，按钮整行铺满 */
+  .total-bar{margin:28px 0 20px;padding:16px 0;gap:8px;flex-wrap:nowrap;align-items:center;}
+  .total-left{min-width:0;flex:1 1 auto;gap:3px;}
+  .total-label{font-size:13px;letter-spacing:.04em;white-space:nowrap;}
+  .total-breakdown{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .total-amount{font-size:25px;white-space:nowrap;flex-shrink:0;}
+  .total-amount .plus{font-size:12px;}
+  .btn-submit{display:block;width:100%;padding:13px 10px;font-size:14px;letter-spacing:.1em;text-indent:.1em;white-space:nowrap;}
+  .form-note{font-size:11px;line-height:1.8;letter-spacing:.01em;margin-top:14px;}
+  .export-area{margin-top:32px;}
+  .export-area h3{font-size:15px !important;white-space:nowrap;}
+  .receipt-preview-wrap,.receipt-preview-img{max-width:100%;}
+  .download-status-tip{font-size:11.5px;letter-spacing:.02em;}
+
+  /* 注意事项 / 分享页正文：收紧字号与字距，段落换行更整齐 */
+  .block{padding:4px 0 4px 14px;margin-bottom:24px;}
+  .block h3{font-size:15px;letter-spacing:.04em;white-space:nowrap;}
+  .block p,.block li{font-size:13px;line-height:1.95;letter-spacing:0;}
+  .block ul{margin-left:14px;}
+  .thanks-closing{font-size:13px;line-height:1.9;letter-spacing:.01em;margin-top:26px;}
+
+  /* 弹窗：不超出屏幕，短文本全部单行 */
+  .modal-overlay{padding:14px;align-items:center;}
+  .modal-dialog{
+    max-width:min(410px,94vw);
+    padding:26px 18px 22px;
+    max-height:calc(100vh - 28px);
+    max-height:calc(100dvh - 28px);
+    overflow-y:auto;
   }
-  .ins-mode-label{
-    display:none;
-  }
-  .order-head-row{
-    flex-direction:column;
-    gap:10px;
-  }
-  .filler-box{
-    align-items:flex-start;
-    margin-bottom:20px;
-  }
-  .filler-input{
-    text-align:left;
-  }
+  .contact-dialog{min-height:0;padding:30px 20px 24px;gap:26px;}
+  .modal-star{font-size:14px;}
+  .modal-title{font-size:15px;letter-spacing:.06em;white-space:nowrap;}
+  .modal-sub{font-size:9px;letter-spacing:.14em;white-space:nowrap;margin-bottom:18px;}
+  .modal-tip{font-size:11.5px;letter-spacing:0;white-space:nowrap;margin-bottom:16px;}
+  .modal-actions{gap:10px;}
+  .modal-btn{min-width:84px;padding:9px 12px;font-size:13px;letter-spacing:.08em;text-indent:.08em;white-space:nowrap;}
+  .contact-list{gap:10px;margin-bottom:12px;}
+  .contact-row{padding:10px 10px;gap:6px;}
+  .contact-platform{font-size:12px;letter-spacing:.02em;white-space:nowrap;}
+  .contact-right{gap:6px;white-space:nowrap;}
+  .contact-id{font-size:12.5px;letter-spacing:0;white-space:nowrap;}
+  .contact-copy-tag{font-size:10px;letter-spacing:.04em;padding:3px 6px;white-space:nowrap;}
+  .contact-hint{font-size:10.5px;letter-spacing:0;white-space:nowrap;margin-bottom:16px;}
+}
+
+/* 超窄屏（<=380px）进一步收紧，仍保持所有文字单行 */
+@media (max-width:380px){
+  .home-header{font-size:8px;letter-spacing:.06em;}
+  .contact-trigger{font-size:8px;letter-spacing:.02em;}
+  .brand{font-size:9.4vw;gap:2px;}
+  .brand-sub{font-size:8px;letter-spacing:.1em;text-indent:.1em;}
+  .option .zh{font-size:11px;letter-spacing:0;text-indent:0;}
+  .option .en{font-size:7.5px;}
+  .sub-nav-link,.back{font-size:10px;}
+  .section-title{font-size:14px;}
+  .section-title .hint{font-size:10px;}
+  .choice-label{font-size:13px;}
+  .choice-subdesc{font-size:10px;}
+  .catalog-price{font-size:12px;}
+  .modal-title{font-size:14px;}
+  .modal-tip{font-size:10.5px;}
 }
