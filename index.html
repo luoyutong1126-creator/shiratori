@@ -220,7 +220,7 @@
             <svg class="phase" viewBox="0 0 32 32" aria-hidden="true">
               <circle cx="16" cy="16" r="10.5" fill="#f2f5ff"/>
             </svg>
-            <span class="zh">免费美化分享</span>
+            <span class="zh">美化分享</span>
             <span class="en">SHARE</span>
             <span class="dot-indicator"></span>
           </a>
@@ -237,7 +237,7 @@
         <div class="sub-nav">
           <button class="sub-nav-link active" data-target="order" type="button">需求填写</button>
           <button class="sub-nav-link" data-target="notes" type="button">注意事项</button>
-          <button class="sub-nav-link" data-target="share" type="button">免费美化分享</button>
+          <button class="sub-nav-link" data-target="share" type="button">美化分享</button>
           <button class="back" data-target="home" type="button">← 返回首页</button>
         </div>
       </header>
@@ -555,7 +555,7 @@
         <div class="sub-nav">
           <button class="sub-nav-link" data-target="order" type="button">需求填写</button>
           <button class="sub-nav-link active" data-target="notes" type="button">注意事项</button>
-          <button class="sub-nav-link" data-target="share" type="button">免费美化分享</button>
+          <button class="sub-nav-link" data-target="share" type="button">美化分享</button>
           <button class="back" data-target="home" type="button">← 返回首页</button>
         </div>
       </header>
@@ -604,43 +604,22 @@
       <div class="page-watermark">@shiratori</div>
     </section>
 
-    <!-- ==================== 视图 D：免费美化分享（白底） ==================== -->
+    <!-- ==================== 视图 D：美化分享（白底） ==================== -->
     <section class="view page" id="view-share">
       <header class="topbar">
         <div class="brand-sm" data-target="home">SHIRATORI</div>
         <div class="sub-nav">
           <button class="sub-nav-link" data-target="order" type="button">需求填写</button>
           <button class="sub-nav-link" data-target="notes" type="button">注意事项</button>
-          <button class="sub-nav-link active" data-target="share" type="button">免费美化分享</button>
+          <button class="sub-nav-link active" data-target="share" type="button">美化分享</button>
           <button class="back" data-target="home" type="button">← 返回首页</button>
         </div>
       </header>
 
       <main class="page-inner">
-        <h1>免费美化分享</h1>
-        <p class="sub">不定期分享可复用的排版模板、配色方案与小技巧，欢迎自取。</p>
+        <h1>美化分享</h1>
         <div class="divider"></div>
-
-        <div class="block">
-          <h3>克莱因蓝 + 宋体 极简版式</h3>
-          <p>以纯黑或纯白为底，主色锁定克莱因蓝 #002FA7，正文用宋体，标题控制字距，留白即克制。</p>
-        </div>
-
-        <div class="block">
-          <h3>月亮主视觉构图</h3>
-          <p>满月素材叠压修长白色主标题，视觉重心居中，底层配合 ∞ 行星微尘轨道营造空间纵深。</p>
-        </div>
-
-        <div class="block">
-          <h3>接单页结构建议</h3>
-          <ul>
-            <li>首页：品牌 + 主视觉 + 入口导航</li>
-            <li>需求页：目录式清单 + 一键导出小票需求单，降低沟通成本</li>
-            <li>说明页：把规则讲在前面，减少售后摩擦</li>
-          </ul>
-        </div>
-
-        <p class="form-note">更多美化素材持续更新中。</p>
+        <p class="coming-soon">敬请期待</p>
       </main>
 
       <div class="page-watermark">@shiratori</div>
@@ -1525,8 +1504,71 @@
       c2d.restore();
     }
 
+    /* ============================================================
+     * 3. 小票需求单字体挂载（修复移动端中文无法显示 / 缺字）
+     *    Canvas 不会等待 Web Font 加载完成，必须在绘制前用 FontFaceSet /
+     *    FontFace API 把 assets/SourceHanSerifCN-Light.woff2 真正挂载到
+     *    document.fonts，并在字体就绪后重绘一次。
+     *    桌面端字体栈保持原来的宋体优先（视觉不变），移动端改为思源宋体优先。
+     * ============================================================ */
+    function receiptFontStack(){
+      const isMobile = window.matchMedia && window.matchMedia('(max-width:640px)').matches;
+      return isMobile
+        ? '"ShiratoriSerif","Songti SC","SimSun","宋体",serif'
+        : '"Songti SC","ShiratoriSerif","SimSun","宋体",serif';
+    }
+
+    let receiptFontPromise = null;
+    let lastReceiptData    = null;
+
+    function ensureReceiptFont(){
+      if(receiptFontPromise) return receiptFontPromise;
+      const sample = '需求填写小票备注金额克莱因蓝SHIRATORI';
+      let p;
+      if(document.fonts && document.fonts.load){
+        p = Promise.all([
+          document.fonts.load('300 16px "ShiratoriSerif"', sample),
+          document.fonts.load('600 16px "ShiratoriSerif"', sample)
+        ]).then(function(){ return true; }).catch(function(){ return false; });
+      } else {
+        p = Promise.resolve(false);
+      }
+      // 部分移动端 WebView 不会主动加载未被 DOM 使用的 @font-face，用 FontFace API 显式挂载兜底
+      receiptFontPromise = p.then(function(loadedByCSS){
+        if(loadedByCSS || !window.FontFace || !document.fonts) return loadedByCSS;
+        try {
+          const face = new FontFace(
+            'ShiratoriSerif',
+            'url("assets/SourceHanSerifCN-Light.woff2") format("woff2")',
+            { weight: '300 900' }
+          );
+          return face.load().then(function(f){
+            document.fonts.add(f);
+            return true;
+          }).catch(function(){ return false; });
+        } catch(e){ return false; }
+      });
+      return receiptFontPromise;
+    }
+
+    // 移动端进入页面即预热字体，生成小票时无需额外等待
+    if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){
+      ensureReceiptFont();
+    }
+
+    function requestReceiptRender(d){
+      lastReceiptData = d;
+      renderReceiptCard(d, false);   // 先立即出图，避免字体加载慢时白屏
+      ensureReceiptFont().then(function(ok){
+        if(ok && lastReceiptData){
+          renderReceiptCard(lastReceiptData, true);  // 字体就绪后用正确字形重绘（不重复滚动）
+        }
+      });
+    }
+
     // 生成小票样式（Receipt Style）需求单预览图：3. 用户 ID 前不加“填表人”字样，直接醒目展示克莱因蓝用户 ID
-    function renderReceiptCard(d){
+    function renderReceiptCard(d, silent){
+      const RF = receiptFontStack();
       const c = document.getElementById('exportCanvas');
       const c2d = c.getContext('2d');
       const S = 2;
@@ -1534,7 +1576,7 @@
       const padX = 38;
       const innerW = Wc - padX * 2;
 
-      c2d.font = '14px "Songti SC","SimSun",serif';
+      c2d.font = '14px ' + RF;
       let itemsH = 0;
       d.calc.items.forEach(function(it){
         itemsH += 28;
@@ -1591,12 +1633,12 @@
       c2d.fillStyle = '#111111';
       c2d.textAlign = 'center';
       c2d.textBaseline = 'top';
-      c2d.font = '300 28px "Cormorant Garamond","Songti SC","SimSun",serif';
+      c2d.font = '300 28px "Cormorant Garamond",' + RF;
       c2d.fillText('S H I R A T O R I', Wc / 2, y);
 
       y += 34;
       c2d.fillStyle = '#777777';
-      c2d.font = '11px "Songti SC","SimSun",serif';
+      c2d.font = '11px ' + RF;
       c2d.fillText('FOR AESTHETIC COMMISSIONS · 客单需求小票', Wc / 2, y);
 
       y += 26;
@@ -1606,19 +1648,19 @@
       // 3. 右上角直接醒目展示克莱因蓝用户 ID（前面不加“填表人”字样）
       c2d.textAlign = 'left';
       c2d.fillStyle = '#666666';
-      c2d.font = '12px "Songti SC","SimSun",serif';
+      c2d.font = '12px ' + RF;
       const orderNo = 'NO.' + String(Date.now()).slice(-6);
       c2d.fillText('单号：' + orderNo, padX, y + 4);
 
       c2d.textAlign = 'right';
       c2d.fillStyle = '#002FA7';
-      c2d.font = '600 18px "Songti SC","SimSun",serif';
+      c2d.font = '600 18px ' + RF;
       c2d.fillText(d.fillerName, Wc - padX, y);
 
       y += 26;
       c2d.textAlign = 'left';
       c2d.fillStyle = '#888888';
-      c2d.font = '11.5px "Songti SC","SimSun",serif';
+      c2d.font = '11.5px ' + RF;
       c2d.fillText('时间：' + d.date, padX, y);
 
       y += 22;
@@ -1628,7 +1670,7 @@
       // 01 项目清单表头
       c2d.textAlign = 'left';
       c2d.fillStyle = '#111111';
-      c2d.font = '600 13px "Songti SC","SimSun",serif';
+      c2d.font = '600 13px ' + RF;
       c2d.fillText('01  项目明细 / ITEM', padX, y);
       c2d.textAlign = 'right';
       c2d.fillText('金额 / PRICE', Wc - padX, y);
@@ -1638,12 +1680,12 @@
       d.calc.items.forEach(function(it){
         c2d.textAlign = 'left';
         c2d.fillStyle = '#111111';
-        c2d.font = '14.5px "Songti SC","SimSun",serif';
+        c2d.font = '14.5px ' + RF;
         c2d.fillText(it.title, padX, y);
 
         c2d.textAlign = 'right';
         c2d.fillStyle = '#111111';
-        c2d.font = '600 14.5px "Songti SC","SimSun",serif';
+        c2d.font = '600 14.5px ' + RF;
         c2d.fillText(it.priceText, Wc - padX, y);
         y += 26;
 
@@ -1651,7 +1693,7 @@
           c2d.textAlign = 'left';
           c2d.fillStyle = '#002FA7';
           c2d.fillRect(padX + 4, y + 3, 2, 14);
-          c2d.font = '13px "Songti SC","SimSun",serif';
+          c2d.font = '13px ' + RF;
           const nLines = wrapText(c2d, '备注：' + it.note, innerW - 18);
           nLines.forEach(function(ln){
             c2d.fillText(ln, padX + 12, y);
@@ -1668,21 +1710,21 @@
       // 02 加急 & 03 聊天背景图
       c2d.textAlign = 'left';
       c2d.fillStyle = '#111111';
-      c2d.font = '600 13.5px "Songti SC","SimSun",serif';
+      c2d.font = '600 13.5px ' + RF;
       c2d.fillText('02  是否需要加急', padX, y);
       c2d.textAlign = 'right';
       c2d.fillStyle = d.calc.urgent ? '#002FA7' : '#333333';
-      c2d.font = '13.5px "Songti SC","SimSun",serif';
+      c2d.font = '13.5px ' + RF;
       c2d.fillText(d.calc.urgent ? '需要 · 金额x2' : '不需要', Wc - padX, y);
       y += 28;
 
       c2d.textAlign = 'left';
       c2d.fillStyle = '#111111';
-      c2d.font = '600 13.5px "Songti SC","SimSun",serif';
+      c2d.font = '600 13.5px ' + RF;
       c2d.fillText('03  聊天背景char图', padX, y);
       c2d.textAlign = 'right';
       c2d.fillStyle = '#002FA7';
-      c2d.font = '13.5px "Songti SC","SimSun",serif';
+      c2d.font = '13.5px ' + RF;
       c2d.fillText(d.bgChar, Wc - padX, y);
       y += 26;
 
@@ -1692,18 +1734,18 @@
       // 04 具体要求 & 05 特殊要求
       c2d.textAlign = 'left';
       c2d.fillStyle = '#111111';
-      c2d.font = '600 13.5px "Songti SC","SimSun",serif';
+      c2d.font = '600 13.5px ' + RF;
       c2d.fillText('04 - 05  具体要求与备注', padX, y);
       y += 26;
 
       reqRows.forEach(function(r){
         c2d.textAlign = 'left';
         c2d.fillStyle = '#555555';
-        c2d.font = '13.5px "Songti SC","SimSun",serif';
+        c2d.font = '13.5px ' + RF;
         c2d.fillText(r.k + '：', padX, y);
 
         c2d.fillStyle = '#002FA7';
-        c2d.font = '14px "Songti SC","SimSun",serif';
+        c2d.font = '14px ' + RF;
         r.lines.forEach(function(ln, i){
           c2d.fillText(ln, padX + 76, y + i * 23);
         });
@@ -1717,13 +1759,13 @@
       // 底部总金额结算
       c2d.textAlign = 'left';
       c2d.fillStyle = '#111111';
-      c2d.font = '600 15px "Songti SC","SimSun",serif';
+      c2d.font = '600 15px ' + RF;
       c2d.fillText('TOTAL / 预估总金额', padX, y + 6);
 
       const priceStr = d.calc.total + '￥' + (d.calc.hasOtherWidget ? ' 起' : '') + (d.calc.urgent ? ' · 已含金额x2' : '');
       c2d.textAlign = 'right';
       c2d.fillStyle = '#002FA7';
-      c2d.font = '600 24px "Songti SC","SimSun",serif';
+      c2d.font = '600 24px ' + RF;
       c2d.fillText(priceStr, Wc - padX, y);
       y += 42;
 
@@ -1743,7 +1785,7 @@
 
       c2d.textAlign = 'center';
       c2d.fillStyle = '#777777';
-      c2d.font = '12px "Songti SC","SimSun",serif';
+      c2d.font = '12px ' + RF;
       c2d.fillText('@shiratori', Wc / 2, y);
 
       c2d.restore();
@@ -1759,7 +1801,9 @@
 
       const area = document.getElementById('exportArea');
       area.style.display = 'block';
-      area.scrollIntoView({ behavior: 'smooth' });
+      if(!silent){
+        area.scrollIntoView({ behavior: 'smooth' });
+      }
     }
 
     if(orderForm){
@@ -1780,7 +1824,7 @@
         const hasSpecial = f.querySelector('input[name="has_special"]:checked').value === 'yes';
         const bgChar = f.querySelector('input[name="bg_char"]:checked').value;
 
-        renderReceiptCard({
+        requestReceiptRender({
           fillerName:  fillerName,
           calc:        calc,
           bgChar:      bgChar,
